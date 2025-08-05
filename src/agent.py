@@ -8,7 +8,7 @@ from loguru import logger
 from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 
-from models import AnswerChoice, Question
+from models import NUM_OPTIONS, AnswerChoice, Question
 
 # Configure the AI model
 logger.info("Initializing AnthropicModel with claude-opus-4-20250514")
@@ -31,22 +31,34 @@ def load_initial_prompt() -> str:
     template_path = Path(__file__).parent / "prompts" / "initial.j2"
     logger.debug(f"Loading prompt template from: {template_path}")
 
-    try:
-        with template_path.open() as f:
-            template_content = f.read()
-        logger.debug(
-            f"Template loaded successfully, length: {len(template_content)} chars"
-        )
-    except FileNotFoundError:
-        logger.error(f"Template file not found: {template_path}")
-        raise
-    except Exception as e:
-        logger.error(f"Error loading template: {e}")
-        raise
+    assert template_path.exists(), (
+        f"Template file not found at {template_path}. "
+        f"Ensure 'initial.j2' exists in the prompts directory."
+    )
+    assert template_path.is_file(), (
+        f"Template path {template_path} exists but is not a file. "
+        f"Check that 'initial.j2' is a regular file, not a directory."
+    )
+
+    with template_path.open() as f:
+        template_content = f.read()
+
+    assert template_content.strip(), (
+        f"Template file {template_path} is empty or contains only whitespace. "
+        f"The template must contain prompt instructions."
+    )
+
+    logger.debug(f"Template loaded successfully, length: {len(template_content)} chars")
 
     # The initial template doesn't need any variables
     template = Template(template_content)
     rendered_prompt = template.render()
+
+    assert rendered_prompt.strip(), (
+        "Rendered template resulted in empty content. "
+        "Check the Jinja2 template syntax in initial.j2."
+    )
+
     logger.debug(
         f"Template rendered, final prompt length: {len(rendered_prompt)} chars"
     )
@@ -62,14 +74,22 @@ async def generate_question() -> Question:
 
     # Get the AI to generate a question
     logger.info("Sending prompt to AI agent")
-    try:
-        result = await question_agent.run(prompt)
-        logger.success("AI agent returned response successfully")
-        logger.debug(f"Generated question length: {len(result.output.question)} chars")
-        logger.debug(f"Number of options generated: {len(result.output.options)}")
-    except Exception as e:
-        logger.error(f"Error during AI generation: {e}")
-        raise
+    result = await question_agent.run(prompt)
+
+    assert result is not None, (
+        "AI agent returned None result. "
+        "Check API key configuration and network connectivity."
+    )
+    assert hasattr(result, "output"), (
+        f"AI agent result missing 'output' attribute. Got result type: {type(result)}"
+    )
+    assert isinstance(result.output, Question), (
+        f"AI agent output is not a Question instance. Got type: {type(result.output)}"
+    )
+
+    logger.success("AI agent returned response successfully")
+    logger.debug(f"Generated question length: {len(result.output.question)} chars")
+    logger.debug(f"Number of options generated: {len(result.output.options)}")
 
     return result.output
 
@@ -80,39 +100,54 @@ if __name__ == "__main__":
     async def main() -> None:
         """Demonstrate generating a new tactical question."""
         logger.info("Starting piste-mind agent demonstration")
-        print("🤺 Generating a new tactical epee scenario...\n")
+        logger.info("🤺 Generating a new tactical epee scenario...")
 
-        try:
-            question = await generate_question()
-            logger.success("Question generated successfully")
-        except Exception as e:
-            logger.error(f"Failed to generate question: {e}")
-            raise
+        question = await generate_question()
+        logger.success("Question generated successfully")
 
         # Display the generated question
         logger.info("Formatting question for display")
-        print("Generated Question:")
-        print("=" * 80)
-        print(f"\n{question.question}\n")
-        print("Options:")
-        for choice, option in zip(AnswerChoice, question.options, strict=False):
-            print(f"\n{choice}. {option}")
+        logger.info("=" * 80)
+        logger.info(f"Generated Question:\n{question.question}")
+        logger.info("Options:")
+
+        assert len(question.options) == len(AnswerChoice), (
+            f"Number of options ({len(question.options)}) doesn't match "
+            f"AnswerChoice enum count ({len(AnswerChoice)}). "
+            f"Expected exactly {NUM_OPTIONS} options."
+        )
+
+        for choice, option in zip(AnswerChoice, question.options, strict=True):
+            logger.info(f"{choice}. {option}")
             logger.debug(f"Option {choice}: {option[:50]}...")
-        print("\n" + "=" * 80)
+        logger.info("=" * 80)
 
         # Also save to a JSON file for reference
         output_data = {"question": question.question, "options": question.options}
 
         output_path = Path("generated_question.json")
         logger.info(f"Saving question to {output_path}")
-        try:
-            with output_path.open("w") as f:
-                json.dump(output_data, f, indent=2)
-            logger.success(f"Question saved successfully to {output_path}")
-            print("\n✅ Question saved to generated_question.json")
-        except Exception as e:
-            logger.error(f"Failed to save question to file: {e}")
-            raise
+
+        # Ensure parent directory exists
+        assert output_path.parent.exists(), (
+            f"Output directory {output_path.parent} does not exist. "
+            f"Cannot save generated question."
+        )
+
+        with output_path.open("w") as f:
+            json.dump(output_data, f, indent=2)
+
+        assert output_path.exists(), (
+            f"Failed to create output file {output_path}. "
+            f"Check file permissions in the current directory."
+        )
+        assert output_path.stat().st_size > 0, (
+            f"Output file {output_path} was created but is empty. "
+            f"JSON serialization may have failed."
+        )
+
+        logger.success(f"Question saved successfully to {output_path}")
+        logger.info("✅ Question saved to generated_question.json")
 
     # Run the async main function
     logger.info("Launching async main function")
