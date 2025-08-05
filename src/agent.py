@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 from jinja2 import Template
-from pydantic import ValidationError
 from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 
@@ -52,30 +51,24 @@ if __name__ == "__main__":
         """Demonstrate generating a new tactical question."""
         print("🤺 Generating a new tactical epee scenario...\n")
 
-        try:
-            question = await generate_question()
+        question = await generate_question()
 
-            print("Generated Question:")
-            print("=" * 80)
-            print(f"\n{question.question}\n")
-            print("Options:")
-            for i, option in enumerate(question.options, 1):
-                print(f"\n{i}. {option}")
-            print("\n" + "=" * 80)
+        print("Generated Question:")
+        print("=" * 80)
+        print(f"\n{question.question}\n")
+        print("Options:")
+        for i, option in enumerate(question.options, 1):
+            print(f"\n{i}. {option}")
+        print("\n" + "=" * 80)
 
-            # Also save to a JSON file for reference
-            output_data = {"question": question.question, "options": question.options}
+        # Also save to a JSON file for reference
+        output_data = {"question": question.question, "options": question.options}
 
-            output_path = Path("generated_question.json")
-            with output_path.open("w") as f:
-                json.dump(output_data, f, indent=2)
+        output_path = Path("generated_question.json")
+        with output_path.open("w") as f:
+            json.dump(output_data, f, indent=2)
 
-            print("\n✅ Question saved to generated_question.json")
-
-        except ValidationError as e:
-            print(f"❌ Validation error: {e}")
-        except Exception as e:
-            print(f"❌ Error generating question: {e}")
+        print("\n✅ Question saved to generated_question.json")
 
     # Run the async main function
     asyncio.run(main())
