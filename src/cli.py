@@ -6,18 +6,33 @@ from pathlib import Path
 
 import click
 from loguru import logger
+from prompt_toolkit import prompt
+from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.styles import Style
+from prompt_toolkit.validation import ValidationError, Validator
 from pydantic_ai import Agent
+from rich.console import Console
+from rich.panel import Panel
+from rich.rule import Rule
 
 from agent import ModelType, get_model, load_prompt_template, run_agent
 from models import Answer, AnswerChoice, Feedback, Question
 
-
-@click.group()
-def cli() -> None:
-    """Piste-mind: Interactive tactical training for epee fencers."""
+console = Console()
 
 
-@cli.command()
+class AnswerValidator(Validator):
+    """Validate that the answer is A, B, C, or D."""
+
+    def validate(self, document: object) -> None:
+        text = document.text.upper()
+        if text not in ["A", "B", "C", "D"]:
+            raise ValidationError(
+                message="Please enter A, B, C, or D", cursor_position=len(document.text)
+            )
+
+
+@click.command()
 @click.option(
     "--model",
     type=click.Choice(["haiku", "sonnet", "opus"], case_sensitive=False),
@@ -25,149 +40,186 @@ def cli() -> None:
     help="AI model to use (default: haiku)",
 )
 @click.option(
-    "--output",
-    "-o",
-    type=click.Path(path_type=Path),
-    default=Path("generated_question.json"),
-    help="Output file path",
+    "--save",
+    "-s",
+    is_flag=True,
+    help="Save question and feedback to files",
 )
-def ask(model: str, output: Path) -> None:
-    """Generate a new tactical scenario."""
-    # Configure model
-    model_type = ModelType[model.upper()]
-    selected_model = get_model(model_type)
+def train(model: str, save: bool) -> None:  # noqa: FBT001
+    """Interactive tactical training session for epee fencers."""
 
-    # Create custom agent with selected model
-    logger.info(f"Creating question agent with {model_type.name} model")
-    question_agent = Agent(
-        model=selected_model,
-        output_type=Question,
-        system_prompt="You are an expert epee fencing coach creating tactical scenarios.",
-        model_settings={"temperature": 0.7},
-    )
+    async def run_session() -> None:
+        # Configure model
+        model_type = ModelType[model.upper()]
+        selected_model = get_model(model_type)
 
-    async def generate() -> None:
-        # Load and render the prompt template
-        prompt = load_prompt_template("initial.j2")
+        # Create agents
+        logger.info(f"Creating agents with {model_type.name} model")
+        question_agent = Agent(
+            model=selected_model,
+            output_type=Question,
+            system_prompt="You are an expert epee fencing coach creating tactical scenarios.",
+            model_settings={"temperature": 0.7},
+        )
 
-        # Run the agent
+        feedback_agent = Agent(
+            model=selected_model,
+            output_type=Feedback,
+            system_prompt="You are an expert epee fencing coach providing detailed tactical feedback.",
+            model_settings={"temperature": 0.3},
+        )
+
+        # Step 1: Generate and present a question
+        console.print("\n[bold cyan]🤺 Generating tactical scenario...[/bold cyan]\n")
+
+        prompt_text = load_prompt_template("initial.j2")
         question = await run_agent(
             agent=question_agent,
-            prompt=prompt,
+            prompt=prompt_text,
             expected_type=Question,
             operation_name="question generation",
         )
 
-        # Display the question
-        click.echo("=" * 80)
-        click.echo(f"Generated Question:\n{question.question}")
-        click.echo("\nOptions:")
+        # Display the scenario
+        console.print(
+            Panel(
+                question.question,
+                title="[bold yellow]Tactical Scenario[/bold yellow]",
+                border_style="yellow",
+            )
+        )
+
+        console.print("\n[bold]Strategic Options:[/bold]")
         for choice, option in zip(AnswerChoice, question.options, strict=True):
-            click.echo(f"{choice}. {option}")
-        click.echo("=" * 80)
+            console.print(f"\n[bold cyan]{choice}.[/bold cyan] {option}")
 
-        # Save to file
-        output_data = {"question": question.question, "options": question.options}
-        with output.open("w") as f:
-            json.dump(output_data, f, indent=2)
+        console.print("\n" + "─" * 80 + "\n")
 
-        click.echo(f"\n✅ Question saved to {output}")
+        # Step 2: Get user's answer and explanation
+        # Create answer completer
+        answer_completer = WordCompleter(["A", "B", "C", "D", "a", "b", "c", "d"])
 
-    asyncio.run(generate())
-
-
-@cli.command()
-@click.option(
-    "--model",
-    type=click.Choice(["haiku", "sonnet", "opus"], case_sensitive=False),
-    default="haiku",
-    help="AI model to use (default: haiku)",
-)
-@click.option(
-    "--question",
-    "-q",
-    type=click.Path(exists=True, path_type=Path),
-    default=Path("question.json"),
-    help="Question JSON file",
-)
-@click.option(
-    "--answer",
-    "-a",
-    type=click.Path(exists=True, path_type=Path),
-    default=Path("answer.json"),
-    help="Answer JSON file",
-)
-@click.option(
-    "--output",
-    "-o",
-    type=click.Path(path_type=Path),
-    default=Path("generated_feedback.json"),
-    help="Output file path",
-)
-def feedback(model: str, question: Path, answer: Path, output: Path) -> None:
-    """Generate coaching feedback for an answer."""
-    # Configure model
-    model_type = ModelType[model.upper()]
-    selected_model = get_model(model_type)
-
-    # Create custom agent with selected model
-    logger.info(f"Creating feedback agent with {model_type.name} model")
-    feedback_agent = Agent(
-        model=selected_model,
-        output_type=Feedback,
-        system_prompt="You are an expert epee fencing coach providing detailed tactical feedback.",
-        model_settings={"temperature": 0.3},
-    )
-
-    async def generate() -> None:
-        # Load question and answer
-        with question.open() as f:
-            question_data = json.load(f)
-        question_obj = Question(**question_data)
-
-        with answer.open() as f:
-            answer_data = json.load(f)
-        answer_obj = Answer(
-            choice=AnswerChoice[answer_data["choice"]],
-            explanation=answer_data["explanation"],
+        # Custom style for prompts
+        style = Style.from_dict(
+            {
+                "prompt": "bold cyan",
+                "answer": "bold green",
+            }
         )
 
-        # Load and render the prompt template
-        prompt = load_prompt_template(
-            "feedback.j2", problem=question_obj, user_response=answer_obj
+        # Get answer choice
+        answer_choice = prompt(
+            "Your choice (A/B/C/D): ",
+            completer=answer_completer,
+            validator=AnswerValidator(),
+            style=style,
+        ).upper()
+
+        # Get explanation
+        console.print("\n[bold cyan]Explain your tactical reasoning:[/bold cyan]")
+        explanation = prompt("> ", multiline=False, style=style)
+
+        # Create Answer object
+        user_answer = Answer(
+            choice=AnswerChoice[answer_choice], explanation=explanation
         )
 
-        # Run the agent
-        feedback_result = await run_agent(
+        # Step 3: Generate and present feedback
+        console.print("\n[bold cyan]🎯 Analyzing your response...[/bold cyan]\n")
+
+        feedback_prompt = load_prompt_template(
+            "feedback.j2", problem=question, user_response=user_answer
+        )
+
+        feedback = await run_agent(
             agent=feedback_agent,
-            prompt=prompt,
+            prompt=feedback_prompt,
             expected_type=Feedback,
             operation_name="feedback generation",
         )
 
-        # Display the feedback
-        click.echo("=" * 80)
-        click.echo("Coaching Feedback:")
-        click.echo(f"\n📌 Acknowledgment:\n{feedback_result.acknowledgment}")
-        click.echo(f"\n🔍 Analysis:\n{feedback_result.analysis}")
-        click.echo(f"\n📚 Advanced Concepts:\n{feedback_result.advanced_concepts}")
-        click.echo(f"\n🏆 Bridge to Mastery:\n{feedback_result.bridge_to_mastery}")
-        click.echo("=" * 80)
+        # Display feedback with rich formatting
+        console.print(
+            Rule("[bold yellow]Coaching Feedback[/bold yellow]", style="yellow")
+        )
 
-        # Save to file
-        feedback_data = {
-            "acknowledgment": feedback_result.acknowledgment,
-            "analysis": feedback_result.analysis,
-            "advanced_concepts": feedback_result.advanced_concepts,
-            "bridge_to_mastery": feedback_result.bridge_to_mastery,
-        }
-        with output.open("w") as f:
-            json.dump(feedback_data, f, indent=2)
+        console.print(
+            Panel(
+                feedback.acknowledgment,
+                title="[green]✓ Acknowledgment[/green]",
+                border_style="green",
+                padding=(1, 2),
+            )
+        )
 
-        click.echo(f"\n✅ Feedback saved to {output}")
+        console.print(
+            Panel(
+                feedback.analysis,
+                title="[blue]🔍 Tactical Analysis[/blue]",
+                border_style="blue",
+                padding=(1, 2),
+            )
+        )
 
-    asyncio.run(generate())
+        console.print(
+            Panel(
+                feedback.advanced_concepts,
+                title="[magenta]📚 Advanced Concepts[/magenta]",
+                border_style="magenta",
+                padding=(1, 2),
+            )
+        )
+
+        console.print(
+            Panel(
+                feedback.bridge_to_mastery,
+                title="[yellow]🏆 Bridge to Mastery[/yellow]",
+                border_style="yellow",
+                padding=(1, 2),
+            )
+        )
+
+        # Save if requested
+        if save:
+            timestamp = Path("session_" + str(int(asyncio.get_event_loop().time())))
+
+            # Save question
+            question_file = timestamp.with_suffix(".question.json")
+            with question_file.open("w") as f:
+                json.dump(
+                    {"question": question.question, "options": question.options},
+                    f,
+                    indent=2,
+                )
+
+            # Save answer
+            answer_file = timestamp.with_suffix(".answer.json")
+            with answer_file.open("w") as f:
+                json.dump(
+                    {"choice": answer_choice, "explanation": explanation}, f, indent=2
+                )
+
+            # Save feedback
+            feedback_file = timestamp.with_suffix(".feedback.json")
+            with feedback_file.open("w") as f:
+                json.dump(
+                    {
+                        "acknowledgment": feedback.acknowledgment,
+                        "analysis": feedback.analysis,
+                        "advanced_concepts": feedback.advanced_concepts,
+                        "bridge_to_mastery": feedback.bridge_to_mastery,
+                    },
+                    f,
+                    indent=2,
+                )
+
+            console.print(f"\n[green]✅ Session saved to {timestamp}.*[/green]")
+
+        console.print("\n[bold cyan]🎯 Training session complete![/bold cyan]\n")
+
+    # Run the async session
+    asyncio.run(run_session())
 
 
 if __name__ == "__main__":
-    cli()
+    train()

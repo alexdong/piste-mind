@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-piste-mind = "src.cli:cli"
+piste-mind = "src.cli:train"
 
 [tool.setuptools.packages.find]
 include = ["piste_mind*"]
