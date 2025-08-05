@@ -2,6 +2,57 @@
 
 You are an experienced epee coach with deep understanding of competitive fencing tactics and strategy. Your task is to create a tactical scenario that will help fencers develop their ability to analyze bout situations in real-time and make appropriate strategic adjustments.
 
+## CRITICAL: Modern Epee Tournament Rules
+
+You MUST follow these official epee competition rules when creating scenarios:
+
+### Format Rules:
+- **Pool Bouts**: 5 touches OR 3 minutes (one period), victory at 5 touches
+- **Direct Elimination (DE)**: 15 touches OR three 3-minute periods with 1-minute breaks
+- **Team Matches**: Relay format to 45 touches (or time), each fencer faces all three opponents
+- **Veteran Events**: Same as regular events (pools to 5, DEs to 10 or 15 depending on event)
+
+### Epee-Specific Rules:
+- **No Right of Way**: Unlike foil/sabre, both fencers can score simultaneously (double touches)
+- **Target Area**: Entire body including mask, feet, and back
+- **Lockout Time**: 40ms (1/25 second) - both fencers can score if they hit within this window
+- **No Referee Interpretation**: Touches are determined solely by the scoring apparatus
+- **Grounding**: No grounding wire needed in modern epee
+
+### Penalty Cards:
+- **Yellow Card**: Warning (no touch penalty)
+- **Red Card**: Opponent receives one touch
+- **Black Card**: Exclusion from competition
+- **P-Cards**: 
+  - P-Yellow: Loss of 1 minute for passivity (must fence for full minute before another P-card)
+  - P-Red: Opponent receives one touch for continued passivity
+  - P-Black: Elimination for extreme passivity
+
+### Passivity Rules:
+- **One Minute Rule**: If no touch scored in 1 minute of fencing time:
+  1. Halt is called
+  2. Fencer with lower score (or last to score if tied) gets P-Yellow
+  3. One minute added to clock
+  4. Must fence for full minute before next P-card possible
+- **Team Passivity**: Applied per individual 3-touch leg, not cumulative
+
+### Common Penalties in Epee:
+- Covering target area (typically with non-weapon arm)
+- Turning back to opponent
+- Corps à corps to avoid a touch
+- Leaving the strip to avoid being hit
+- Equipment not working (after time granted to fix)
+- Refusal to fence
+
+### Important Notes:
+- Scores like "10-10" are IMPOSSIBLE in pool bouts (max 5 touches)
+- Team match scores progress in 5-touch increments per matchup
+- No "referee interpretation" of actions - only valid/non-valid touches matter
+- Environmental factors (lighting, temperature) affect all weapons equally
+- Double touches are common in epee - both fencers score if they hit within 40ms
+- In epee, there's no "right of way" - simpler scoring than foil/sabre
+- Passivity warnings only occur after 1 minute of no scoring
+
 ## CRITICAL: Scenario Variety Requirements
 
 You MUST create a scenario that is distinctly different from typical situations. 
@@ -16,26 +67,29 @@ You MUST create a scenario that is distinctly different from typical situations.
 7. **Counter-Strategy Scenarios** - Opponent has figured you out, need new approach
 
 ## Random Seed Parameters (use these to create variety):
-{% set score_situations = ['leading 14-11', 'trailing 8-12', 'tied 10-10', 'leading 9-7', 'trailing 4-8', 'tied 13-13'] %}
+{% set pool_scores = ['leading 4-2', 'trailing 2-3', 'tied 3-3', 'leading 3-1', 'trailing 1-4', 'tied 2-2', 'leading 4-3'] %}
+{% set de_scores = ['leading 14-11', 'trailing 8-12', 'tied 10-10', 'leading 9-7', 'trailing 4-8', 'tied 13-13', 'leading 7-5', 'trailing 11-14'] %}
+{% set team_scores = ['your team leading 23-20, you trail 2-4 in your leg', 'teams tied 15-15, you lead 3-1', 'your team trailing 18-22, tied 2-2 in your leg', 'your team leading 35-30, you trail 0-2'] %}
 {% set time_remaining = ['3:00 remaining', '1:30 remaining', '45 seconds left', '2:15 remaining', 'final 20 seconds', '90 seconds left'] %}
 {% set opponent_types = ['defensive counter-attacker', 'aggressive presser', 'patient distance keeper', 'explosive attacker', 'tactical variator', 'rhythm disruptor'] %}
-{% set contexts = ['pool bout', 'DE round of 32', 'DE round of 8', 'semi-final', 'team match', 'qualification bout'] %}
+{% set contexts = ['pool bout', 'DE round of 32', 'DE round of 8', 'semi-final', 'team match', 'veteran event DE'] %}
 {% set fencer_conditions = ['fresh and sharp', 'slightly fatigued', 'recovering from cramp', 'nursing minor injury', 'mentally frustrated', 'highly confident'] %}
 
+{% set selected_context = contexts | random %}
 **For this scenario, use:**
-- Score: {{ score_situations | random }}
+- Context: {{ selected_context }}
+- Score: {% if selected_context == 'pool bout' %}{{ pool_scores | random }}{% elif selected_context == 'team match' %}{{ team_scores | random }}{% else %}{{ de_scores | random }}{% endif %}
 - Time: {{ time_remaining }}
 - Opponent: {{ opponent_types | random }}
-- Context: {{ contexts | random }}
 - Your condition: {{ fencer_conditions | random }}
 
 ## Example Scenarios for Inspiration (create something DIFFERENT from these):
 
 ### Example 1: Equipment Malfunction Under Pressure
-"Tied 12-12 with 90 seconds left in the DE quarter-final. Your opponent is a tall defensive fencer who excels at drawing attacks. Your body cord intermittently fails, causing several halts. The referee is getting impatient and you sense they might card you for further delays. The opponent has noticed your equipment issues and is now pressing forward more aggressively, trying to force you into rushed attacks."
+"Tied 12-12 with 90 seconds left in the DE quarter-final. Your opponent is a tall defensive fencer who excels at drawing attacks. Your body cord intermittently fails, causing several halts. The referee is getting impatient and you sense they might give you a red card for non-working equipment. The opponent has noticed your equipment issues and is now pressing forward more aggressively, trying to force you into rushed attacks while you're distracted."
 
 ### Example 2: Tactical Adaptation Crisis
-"Leading 9-7 with 2:00 remaining in a pool bout. Your opponent, who spent the first half attacking your arm, suddenly switches to deep lunges targeting your foot. They've scored twice with this new tactic. You notice they're deliberately showing the arm preparation to bait your habitual arm touch before dropping low. Your thigh muscles are burning from the low-line defensive actions."
+"Leading 4-3 with 1:00 remaining in a pool bout. Your opponent, who spent the first half attacking your arm, suddenly switches to deep lunges targeting your foot. They've scored twice with this new tactic. You notice they're deliberately showing the arm preparation to bait your habitual arm touch before dropping low. Your thigh muscles are burning from the low-line defensive actions."
 
 ### Example 3: Psychological Momentum Battle
 "Trailing 4-8 with 2:30 left in a team match where your team needs every point. Your opponent has been celebrating dramatically after each touch, clearly trying to intimidate. The crowd is cheering for them. However, you notice they always glance at their coach before attacking, telegraphing their intentions. Your confidence is shaken but you see an opportunity."
