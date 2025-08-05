@@ -35,7 +35,7 @@
 ./
 ├── .claude/                # Claude Code slash commands
 ├── docs/                   # Documentation
-├── {package_name}/         # Application code
+├── piste_mind/             # Application code
 │   ├── cli/                # CLI related code
 │   ├── component/          # Component code and tests
 │   ├── db/                 # Database access code and tests
