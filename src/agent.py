@@ -115,7 +115,7 @@ def load_prompt_template(template_name: str, **context: BaseModel) -> str:
     return rendered_prompt
 
 
-def _validate_agent_result[T: BaseModel](
+def _parse_agent_result[T: BaseModel](
     result: object | None, expected_type: type[T], operation_name: str
 ) -> T:
     """Validate AI agent result and extract output.
@@ -180,15 +180,14 @@ async def run_agent(
     result = await agent.run(prompt)
 
     # Validate and extract output
-    output = _validate_agent_result(result, expected_type, operation_name)
+    output = _parse_agent_result(result, expected_type, operation_name)
     logger.success(f"AI agent completed {operation_name} successfully")
 
-    # Log output details based on type
-    if hasattr(output, "__dict__"):
-        for field_name, field_value in output.__dict__.items():
-            if isinstance(field_value, str):
-                logger.debug(f"{field_name} length: {len(field_value)} chars")
-            elif isinstance(field_value, list):
-                logger.debug(f"{field_name} count: {len(field_value)} items")
+    # Log output details
+    for field_name, field_value in output.__dict__.items():
+        if isinstance(field_value, str):
+            logger.debug(f"{field_name} length: {len(field_value)} chars")
+        elif isinstance(field_value, list):
+            logger.debug(f"{field_name} count: {len(field_value)} items")
 
     return output
