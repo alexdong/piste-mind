@@ -1,4 +1,4 @@
-.PHONY: dev test test-coverage type-coverage update-llms-txt
+.PHONY: dev test test-coverage type-coverage update-llms-txt run
 
 dev:
 	uv run ruff check . --fix --unsafe-fixes
@@ -41,3 +41,6 @@ update-llms-txt:
 	\
 	IMPORTANT: Only update existing files or create new ones for tools in Python.md. Use curl to download llms.txt files when available. For CLI tools not installed, create placeholder noting unavailability."
 	@echo "✅ llms/*.txt files updated!"
+
+run:
+	uv run python -m src.cli --model sonnet
