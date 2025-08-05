@@ -4,7 +4,7 @@ import asyncio
 
 import click
 from loguru import logger
-from prompt_toolkit import prompt
+from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.styles import Style
 from pydantic_ai import Agent
@@ -34,14 +34,10 @@ def parse_answer_choice(text: str) -> AnswerChoice:
     return AnswerChoice[normalized]
 
 
-def get_user_choice(completer: WordCompleter, style: Style) -> AnswerChoice:
+async def get_user_choice(session: PromptSession) -> AnswerChoice:
     """Get and parse user's answer choice."""
     while True:
-        answer_input = prompt(
-            "Your choice (A/B/C/D): ",
-            completer=completer,
-            style=style,
-        )
+        answer_input = await session.prompt_async("Your choice (A/B/C/D): ")
         try:
             return parse_answer_choice(answer_input)
         except ValueError as e:
@@ -124,12 +120,15 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
             }
         )
 
+        # Create prompt session for async input
+        session = PromptSession(completer=answer_completer, style=style)
+
         # Get answer choice using parse-don't-validate pattern
-        parsed_choice = get_user_choice(answer_completer, style)
+        parsed_choice = await get_user_choice(session)
 
         # Get explanation
         console.print("\n[bold cyan]Explain your tactical reasoning:[/bold cyan]")
-        explanation = prompt("> ", multiline=False, style=style)
+        explanation = await session.prompt_async("> ")
 
         # Create Answer object using the parsed choice
         user_answer = Answer(choice=parsed_choice, explanation=explanation)
