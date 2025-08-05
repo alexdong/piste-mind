@@ -11,7 +11,7 @@ from pydantic_ai.models.anthropic import AnthropicModel
 from models import Question
 
 # Configure the AI model
-model = AnthropicModel("claude-3-opus-20240229")
+model = AnthropicModel("claude-opus-4-20250514")
 
 # Create agent for generating tactical questions
 # Temperature 0.7 provides good balance between creativity and consistency
