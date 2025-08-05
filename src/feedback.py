@@ -49,19 +49,14 @@ if __name__ == "__main__":
         question_path = Path("question.json")
         answer_path = Path("answer.json")
 
-        if not question_path.exists():
-            err = FileNotFoundError(f"Question file not found: {question_path}")
-            err.add_note("Please create question.json with sample data")
-            err.add_note(
-                'Expected format: {"question": "...", "options": ["...", "...", "...", "..."]}'
-            )
-            raise err
-
-        if not answer_path.exists():
-            err = FileNotFoundError(f"Answer file not found: {answer_path}")
-            err.add_note("Please create answer.json with sample data")
-            err.add_note('Expected format: {"choice": "A", "explanation": "..."}')
-            raise err
+        assert question_path.exists(), (
+            f"Question file not found at {question_path}. "
+            f"Please create question.json with sample data."
+        )
+        assert answer_path.exists(), (
+            f"Answer file not found at {answer_path}. "
+            f"Please create answer.json with sample data."
+        )
 
         # Load question data
         with question_path.open() as f:

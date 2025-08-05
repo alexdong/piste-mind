@@ -52,13 +52,11 @@ if __name__ == "__main__":
         logger.info(f"Generated Question:\n{question.question}")
         logger.info("Options:")
 
-        if len(question.options) != len(AnswerChoice):
-            err = ValueError(
-                f"Number of options ({len(question.options)}) doesn't match AnswerChoice enum count ({len(AnswerChoice)})"
-            )
-            err.add_note(f"Expected exactly {NUM_OPTIONS} options")
-            err.add_note(f"Options provided: {question.options}")
-            raise err
+        assert len(question.options) == len(AnswerChoice), (
+            f"Number of options ({len(question.options)}) doesn't match "
+            f"AnswerChoice enum count ({len(AnswerChoice)}). "
+            f"Expected exactly {NUM_OPTIONS} options."
+        )
 
         for choice, option in zip(AnswerChoice, question.options, strict=True):
             logger.info(f"{choice}. {option}")
@@ -71,30 +69,22 @@ if __name__ == "__main__":
         logger.info(f"Saving question to {output_path}")
 
         # Ensure parent directory exists
-        if not output_path.parent.exists():
-            err = FileNotFoundError(
-                f"Output directory does not exist: {output_path.parent}"
-            )
-            err.add_note("Cannot save generated question")
-            err.add_note(f"Current working directory: {Path.cwd()}")
-            raise err
+        assert output_path.parent.exists(), (
+            f"Output directory {output_path.parent} does not exist. "
+            f"Cannot save generated question."
+        )
 
         with output_path.open("w") as f:
             json.dump(output_data, f, indent=2)
 
-        if not output_path.exists():
-            err = OSError(f"Failed to create output file: {output_path}")
-            err.add_note("Check file permissions in the current directory")
-            err.add_note(
-                f"Directory permissions: {oct(output_path.parent.stat().st_mode)[-3:]}"
-            )
-            raise err
-
-        if output_path.stat().st_size == 0:
-            err = OSError(f"Output file was created but is empty: {output_path}")
-            err.add_note("JSON serialization may have failed")
-            err.add_note(f"Data attempted to write: {output_data}")
-            raise err
+        assert output_path.exists(), (
+            f"Failed to create output file {output_path}. "
+            f"Check file permissions in the current directory."
+        )
+        assert output_path.stat().st_size > 0, (
+            f"Output file {output_path} was created but is empty. "
+            f"JSON serialization may have failed."
+        )
 
         logger.success(f"Question saved successfully to {output_path}")
         logger.info("✅ Question saved to generated_question.json")

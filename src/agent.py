@@ -67,26 +67,22 @@ def load_prompt_template(template_name: str, **context: BaseModel) -> str:
     template_path = Path(__file__).parent / "prompts" / template_name
     logger.debug(f"Loading template from: {template_path}")
 
-    if not template_path.exists():
-        err = FileNotFoundError(f"Template file not found: {template_path}")
-        err.add_note(f"Ensure '{template_name}' exists in the prompts directory")
-        err.add_note(f"Current working directory: {Path.cwd()}")
-        raise err
-
-    if not template_path.is_file():
-        err = ValueError(f"Template path exists but is not a file: {template_path}")
-        err.add_note(f"Check that '{template_name}' is a regular file, not a directory")
-        raise err
+    assert template_path.exists(), (
+        f"Template file not found at {template_path}. "
+        f"Ensure '{template_name}' exists in the prompts directory."
+    )
+    assert template_path.is_file(), (
+        f"Template path {template_path} exists but is not a file. "
+        f"Check that '{template_name}' is a regular file, not a directory."
+    )
 
     with template_path.open() as f:
         template_content = f.read()
 
-    if not template_content.strip():
-        err = ValueError(
-            f"Template file is empty or contains only whitespace: {template_path}"
-        )
-        err.add_note("The template must contain prompt instructions")
-        raise err
+    assert template_content.strip(), (
+        f"Template file {template_path} is empty or contains only whitespace. "
+        f"The template must contain prompt instructions."
+    )
 
     logger.debug(f"Template loaded successfully, length: {len(template_content)} chars")
 
@@ -94,11 +90,10 @@ def load_prompt_template(template_name: str, **context: BaseModel) -> str:
     template = Template(template_content)
     rendered_prompt = template.render(**context)
 
-    if not rendered_prompt.strip():
-        err = ValueError("Rendered template resulted in empty content")
-        err.add_note(f"Check the Jinja2 template syntax in {template_name}")
-        err.add_note(f"Context variables provided: {list(context.keys())}")
-        raise err
+    assert rendered_prompt.strip(), (
+        f"Rendered template resulted in empty content. "
+        f"Check the Jinja2 template syntax in {template_name}."
+    )
 
     logger.debug(
         f"Template rendered with {len(context)} variables, "
