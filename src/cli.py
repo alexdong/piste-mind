@@ -1,8 +1,6 @@
 """Command-line interface for piste-mind."""
 
 import asyncio
-import json
-from pathlib import Path
 
 import click
 from loguru import logger
@@ -16,6 +14,7 @@ from rich.rule import Rule
 
 from src.agent import ModelType, get_model, load_prompt_template, run_agent
 from src.models import Answer, AnswerChoice, Feedback, Question
+from src.session import SessionManager
 
 console = Console()
 
@@ -192,41 +191,15 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
 
         # Save if requested
         if save:
-            timestamp = Path("session_" + str(int(asyncio.get_event_loop().time())))
-
-            # Save question
-            question_file = timestamp.with_suffix(".question.json")
-            with question_file.open("w") as f:
-                json.dump(
-                    {"question": question.question, "options": question.options},
-                    f,
-                    indent=2,
-                )
-
-            # Save answer
-            answer_file = timestamp.with_suffix(".answer.json")
-            with answer_file.open("w") as f:
-                json.dump(
-                    {"choice": parsed_choice.value, "explanation": explanation},
-                    f,
-                    indent=2,
-                )
-
-            # Save feedback
-            feedback_file = timestamp.with_suffix(".feedback.json")
-            with feedback_file.open("w") as f:
-                json.dump(
-                    {
-                        "acknowledgment": feedback.acknowledgment,
-                        "analysis": feedback.analysis,
-                        "advanced_concepts": feedback.advanced_concepts,
-                        "bridge_to_mastery": feedback.bridge_to_mastery,
-                    },
-                    f,
-                    indent=2,
-                )
-
-            console.print(f"\n[green]✅ Session saved to {timestamp}.*[/green]")
+            session_manager = SessionManager()
+            timestamp = asyncio.get_event_loop().time()
+            session_path = session_manager.save_session(
+                timestamp=timestamp,
+                question=question,
+                answer=user_answer,
+                feedback=feedback,
+            )
+            console.print(f"\n[green]✅ Session saved to {session_path}.*[/green]")
 
         console.print("\n[bold cyan]🎯 Training session complete![/bold cyan]\n")
 
