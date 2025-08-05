@@ -1,0 +1,1 @@
+[ ] Add a fencing event on this day to provide more variety in the training schedule.
