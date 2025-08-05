@@ -33,26 +33,35 @@ def get_model(model_type: ModelType) -> AnthropicModel:
     return AnthropicModel(model_type.value)
 
 
-def get_default_model_type() -> ModelType:
-    """Get the default model type from environment or HAIKU.
+def parse_model_type_from_env() -> ModelType:
+    """Parse model type from PISTE_MIND_MODEL environment variable.
 
     Returns:
-        ModelType from PISTE_MIND_MODEL env var or HAIKU as default
+        Parsed ModelType from environment
+
+    Raises:
+        ValueError: If PISTE_MIND_MODEL contains invalid model type
     """
     env_model = os.getenv("PISTE_MIND_MODEL", "HAIKU").upper()
     try:
         return ModelType[env_model]
-    except KeyError:
-        logger.warning(
-            f"Invalid model type '{env_model}' in PISTE_MIND_MODEL. "
-            f"Valid options: {[m.name for m in ModelType]}. "
-            f"Defaulting to HAIKU."
-        )
-        return ModelType.HAIKU
+    except KeyError as e:
+        err = ValueError(f"Invalid model type in PISTE_MIND_MODEL: '{env_model}'")
+        err.add_note(f"Valid options: {', '.join(m.name for m in ModelType)}")
+        err.add_note("Set PISTE_MIND_MODEL to one of: HAIKU, SONNET, or OPUS")
+        raise err from e
 
 
 # Configure the default AI model globally
-MODEL = get_model(get_default_model_type())
+# Parse model type from environment at module initialization
+try:
+    _default_model_type = parse_model_type_from_env()
+except ValueError:
+    # Fall back to HAIKU if environment variable is invalid
+    logger.warning("Invalid PISTE_MIND_MODEL, using HAIKU as default")
+    _default_model_type = ModelType.HAIKU
+
+MODEL = get_model(_default_model_type)
 
 # Type variable for generic output types
 T = TypeVar("T", bound=BaseModel)
