@@ -1,5 +1,7 @@
 """Common AI agent utilities for piste-mind."""
 
+import os
+from enum import Enum
 from pathlib import Path
 from typing import TypeVar
 
@@ -9,9 +11,44 @@ from pydantic import BaseModel
 from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 
-# Configure the AI model globally
-logger.info("Initializing AnthropicModel with claude-opus-4-20250514")
-MODEL = AnthropicModel("claude-opus-4-20250514")
+
+class ModelType(Enum):
+    """Available Anthropic model types."""
+
+    HAIKU = "claude-3-5-haiku-20241022"
+    SONNET = "claude-3-5-sonnet-20241022"
+    OPUS = "claude-opus-4-20250514"
+
+
+def get_model(model_type: ModelType | None = None) -> AnthropicModel:
+    """Get the configured AI model.
+
+    Args:
+        model_type: The model type to use. If None, uses environment variable
+                   PISTE_MIND_MODEL or defaults to HAIKU.
+
+    Returns:
+        Configured AnthropicModel instance
+    """
+    if model_type is None:
+        # Check environment variable for model preference
+        env_model = os.getenv("PISTE_MIND_MODEL", "HAIKU").upper()
+        try:
+            model_type = ModelType[env_model]
+        except KeyError:
+            logger.warning(
+                f"Invalid model type '{env_model}' in PISTE_MIND_MODEL. "
+                f"Valid options: {[m.name for m in ModelType]}. "
+                f"Defaulting to HAIKU."
+            )
+            model_type = ModelType.HAIKU
+
+    logger.info(f"Initializing AnthropicModel with {model_type.value}")
+    return AnthropicModel(model_type.value)
+
+
+# Configure the default AI model globally
+MODEL = get_model()
 
 # Type variable for generic output types
 T = TypeVar("T", bound=BaseModel)
