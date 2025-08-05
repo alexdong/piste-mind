@@ -29,6 +29,67 @@ adjustments mid-bout.
 
 Built for fencers who know that touches are won in the mind before they're scored on the strip.
 
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/alexdong/piste-mind
+   cd piste-mind
+   ```
+
+2. Install dependencies using uv:
+   ```bash
+   uv sync
+   ```
+
+3. Set up your Anthropic API key:
+   ```bash
+   export ANTHROPIC_API_KEY="your-api-key-here"
+   ```
+
+## Usage
+
+### Interactive Training Session
+
+Start an interactive tactical training session:
+
+```bash
+uv run python -m src.cli
+```
+
+Options:
+- `--model`: Choose AI model (haiku, sonnet, or opus). Default: haiku
+- `--save`: Save session data to files for later review
+
+Examples:
+```bash
+# Basic training session with default model (haiku)
+uv run python -m src.cli
+
+# Use a more advanced model for richer feedback
+uv run python -m src.cli --model sonnet
+
+# Save session for later review
+uv run python -m src.cli --save
+```
+
+### Standalone Tools
+
+Generate individual questions or feedback:
+
+```bash
+# Generate a new tactical question
+uv run python -m src.ask
+
+# Generate feedback (requires question.json and answer.json files)
+uv run python -m src.feedback
+```
+
+### Environment Variables
+
+- `ANTHROPIC_API_KEY`: Your Anthropic API key (required)
+- `PISTE_MIND_MODEL`: Default model to use (HAIKU, SONNET, or OPUS)
+
 ## Tech Stack
 
 - **Modern Python tooling**: uv, ruff, pytest, pydantic
