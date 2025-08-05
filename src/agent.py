@@ -16,7 +16,7 @@ model = AnthropicModel("claude-opus-4-20250514")
 # Temperature 0.7 provides good balance between creativity and consistency
 question_agent = Agent(
     model=model,
-    result_type=Question,
+    output_type=Question,
     system_prompt="You are an expert epee fencing coach creating tactical scenarios.",
     model_settings={"temperature": 0.7},
 )
@@ -41,7 +41,7 @@ async def generate_question() -> Question:
     # Get the AI to generate a question
     result = await question_agent.run(prompt)
 
-    return result.data
+    return result.output
 
 
 if __name__ == "__main__":
