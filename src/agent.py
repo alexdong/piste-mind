@@ -67,22 +67,26 @@ def load_prompt_template(template_name: str, **context: BaseModel) -> str:
     template_path = Path(__file__).parent / "prompts" / template_name
     logger.debug(f"Loading template from: {template_path}")
 
-    assert template_path.exists(), (
-        f"Template file not found at {template_path}. "
-        f"Ensure '{template_name}' exists in the prompts directory."
-    )
-    assert template_path.is_file(), (
-        f"Template path {template_path} exists but is not a file. "
-        f"Check that '{template_name}' is a regular file, not a directory."
-    )
+    if not template_path.exists():
+        err = FileNotFoundError(f"Template file not found: {template_path}")
+        err.add_note(f"Ensure '{template_name}' exists in the prompts directory")
+        err.add_note(f"Current working directory: {Path.cwd()}")
+        raise err
+
+    if not template_path.is_file():
+        err = ValueError(f"Template path exists but is not a file: {template_path}")
+        err.add_note(f"Check that '{template_name}' is a regular file, not a directory")
+        raise err
 
     with template_path.open() as f:
         template_content = f.read()
 
-    assert template_content.strip(), (
-        f"Template file {template_path} is empty or contains only whitespace. "
-        f"The template must contain prompt instructions."
-    )
+    if not template_content.strip():
+        err = ValueError(
+            f"Template file is empty or contains only whitespace: {template_path}"
+        )
+        err.add_note("The template must contain prompt instructions")
+        raise err
 
     logger.debug(f"Template loaded successfully, length: {len(template_content)} chars")
 
@@ -90,10 +94,11 @@ def load_prompt_template(template_name: str, **context: BaseModel) -> str:
     template = Template(template_content)
     rendered_prompt = template.render(**context)
 
-    assert rendered_prompt.strip(), (
-        f"Rendered template resulted in empty content. "
-        f"Check the Jinja2 template syntax in {template_name}."
-    )
+    if not rendered_prompt.strip():
+        err = ValueError("Rendered template resulted in empty content")
+        err.add_note(f"Check the Jinja2 template syntax in {template_name}")
+        err.add_note(f"Context variables provided: {list(context.keys())}")
+        raise err
 
     logger.debug(
         f"Template rendered with {len(context)} variables, "
@@ -123,18 +128,27 @@ async def run_agent(
     logger.info(f"Sending prompt to AI agent for {operation_name}")
     result = await agent.run(prompt)
 
-    assert result is not None, (
-        f"AI agent returned None result for {operation_name}. "
-        f"Check API key configuration and network connectivity."
-    )
-    assert hasattr(result, "output"), (
-        f"AI agent result missing 'output' attribute for {operation_name}. "
-        f"Got result type: {type(result)}"
-    )
-    assert isinstance(result.output, expected_type), (
-        f"AI agent output is not a {expected_type.__name__} instance for {operation_name}. "
-        f"Got type: {type(result.output)}"
-    )
+    if result is None:
+        err = RuntimeError(f"AI agent returned None result for {operation_name}")
+        err.add_note("Check API key configuration and network connectivity")
+        err.add_note("Ensure the AI service is available and responding")
+        raise err
+
+    if not hasattr(result, "output"):
+        err = AttributeError(
+            f"AI agent result missing 'output' attribute for {operation_name}"
+        )
+        err.add_note(f"Got result type: {type(result)}")
+        err.add_note(f"Result attributes: {dir(result)}")
+        raise err
+
+    if not isinstance(result.output, expected_type):
+        err = TypeError(
+            f"AI agent output is not a {expected_type.__name__} instance for {operation_name}"
+        )
+        err.add_note(f"Expected type: {expected_type.__name__}")
+        err.add_note(f"Got type: {type(result.output)}")
+        raise err
 
     logger.success(f"AI agent completed {operation_name} successfully")
 
