@@ -1,6 +1,6 @@
 """Data models for the piste-mind tactical training tool."""
 
-from enum import Enum
+from enum import IntEnum
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -8,13 +8,17 @@ from pydantic import BaseModel, Field, field_validator
 NUM_OPTIONS = 4
 
 
-class AnswerChoice(str, Enum):
+class AnswerChoice(IntEnum):
     """Valid answer choices for tactical scenarios."""
 
-    A = "a"
-    B = "b"
-    C = "c"
-    D = "d"
+    A = 0
+    B = 1
+    C = 2
+    D = 3
+
+    def __str__(self) -> str:
+        """Return the letter representation."""
+        return self.name
 
 
 class Question(BaseModel):
@@ -49,7 +53,7 @@ class Answer(BaseModel):
     """A student's response to a tactical scenario."""
 
     choice: AnswerChoice = Field(
-        ..., description="The chosen tactical option (a, b, c, or d)"
+        ..., description="The chosen tactical option (A, B, C, or D)"
     )
     explanation: str = Field(
         ...,
@@ -104,13 +108,13 @@ if __name__ == "__main__":
 
     # Create an Answer from the provided example
     answer_data = {
-        "choice": "d",
+        "choice": AnswerChoice.D,
         "explanation": "Exhaust them so they lost their patient or the pain becomes unbearable. Might be a good idea to follow up with a parry-riposte",
     }
 
     print("\n2. Creating Answer model:")
     answer = Answer(**answer_data)
-    print(f"   ✓ Choice: {answer.choice.value.upper()}")
+    print(f"   ✓ Choice: {answer.choice}")
     print(f"   ✓ Explanation: {answer.explanation[:50]}...")
 
     # Create sample Feedback

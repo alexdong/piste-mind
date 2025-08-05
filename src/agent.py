@@ -7,7 +7,7 @@ from jinja2 import Template
 from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 
-from models import Question
+from models import AnswerChoice, Question
 
 # Configure the AI model
 model = AnthropicModel("claude-opus-4-20250514")
@@ -57,8 +57,8 @@ if __name__ == "__main__":
         print("=" * 80)
         print(f"\n{question.question}\n")
         print("Options:")
-        for i, option in enumerate(question.options, 1):
-            print(f"\n{i}. {option}")
+        for choice, option in zip(AnswerChoice, question.options, strict=False):
+            print(f"\n{choice}. {option}")
         print("\n" + "=" * 80)
 
         # Also save to a JSON file for reference
