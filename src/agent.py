@@ -20,35 +20,39 @@ class ModelType(Enum):
     OPUS = "claude-opus-4-20250514"
 
 
-def get_model(model_type: ModelType | None = None) -> AnthropicModel:
+def get_model(model_type: ModelType) -> AnthropicModel:
     """Get the configured AI model.
 
     Args:
-        model_type: The model type to use. If None, uses environment variable
-                   PISTE_MIND_MODEL or defaults to HAIKU.
+        model_type: The model type to use.
 
     Returns:
         Configured AnthropicModel instance
     """
-    if model_type is None:
-        # Check environment variable for model preference
-        env_model = os.getenv("PISTE_MIND_MODEL", "HAIKU").upper()
-        try:
-            model_type = ModelType[env_model]
-        except KeyError:
-            logger.warning(
-                f"Invalid model type '{env_model}' in PISTE_MIND_MODEL. "
-                f"Valid options: {[m.name for m in ModelType]}. "
-                f"Defaulting to HAIKU."
-            )
-            model_type = ModelType.HAIKU
-
     logger.info(f"Initializing AnthropicModel with {model_type.value}")
     return AnthropicModel(model_type.value)
 
 
+def get_default_model_type() -> ModelType:
+    """Get the default model type from environment or HAIKU.
+
+    Returns:
+        ModelType from PISTE_MIND_MODEL env var or HAIKU as default
+    """
+    env_model = os.getenv("PISTE_MIND_MODEL", "HAIKU").upper()
+    try:
+        return ModelType[env_model]
+    except KeyError:
+        logger.warning(
+            f"Invalid model type '{env_model}' in PISTE_MIND_MODEL. "
+            f"Valid options: {[m.name for m in ModelType]}. "
+            f"Defaulting to HAIKU."
+        )
+        return ModelType.HAIKU
+
+
 # Configure the default AI model globally
-MODEL = get_model()
+MODEL = get_model(get_default_model_type())
 
 # Type variable for generic output types
 T = TypeVar("T", bound=BaseModel)
@@ -102,27 +106,24 @@ def load_prompt_template(template_name: str, **context: BaseModel) -> str:
     return rendered_prompt
 
 
-async def run_agent(
-    agent: Agent[T], prompt: str, expected_type: type[T], operation_name: str
+def _validate_agent_result[T: BaseModel](
+    result: object | None, expected_type: type[T], operation_name: str
 ) -> T:
-    """Run an AI agent with a prompt and validate the output.
+    """Validate AI agent result and extract output.
 
     Args:
-        agent: The pydantic-ai Agent to run
-        prompt: The prompt to send to the agent
-        expected_type: The expected output type for validation
-        operation_name: Name of the operation for logging
+        result: The result from agent.run()
+        expected_type: The expected output type
+        operation_name: Name of the operation for error messages
 
     Returns:
-        The validated output from the agent
+        The validated output
+
+    Raises:
+        RuntimeError: If result is None
+        AttributeError: If result missing 'output' attribute
+        TypeError: If output is not expected type
     """
-    logger.info(f"Starting {operation_name}")
-    logger.debug(f"Prompt length: {len(prompt)} chars")
-
-    # Get the AI to generate a response
-    logger.info(f"Sending prompt to AI agent for {operation_name}")
-    result = await agent.run(prompt)
-
     if result is None:
         err = RuntimeError(f"AI agent returned None result for {operation_name}")
         err.add_note("Check API key configuration and network connectivity")
@@ -145,10 +146,35 @@ async def run_agent(
         err.add_note(f"Got type: {type(result.output)}")
         raise err
 
+    return result.output
+
+
+async def run_agent(
+    agent: Agent[T], prompt: str, expected_type: type[T], operation_name: str
+) -> T:
+    """Run an AI agent with a prompt and validate the output.
+
+    Args:
+        agent: The pydantic-ai Agent to run
+        prompt: The prompt to send to the agent
+        expected_type: The expected output type for validation
+        operation_name: Name of the operation for logging
+
+    Returns:
+        The validated output from the agent
+    """
+    logger.info(f"Starting {operation_name}")
+    logger.debug(f"Prompt length: {len(prompt)} chars")
+
+    # Get the AI to generate a response
+    logger.info(f"Sending prompt to AI agent for {operation_name}")
+    result = await agent.run(prompt)
+
+    # Validate and extract output
+    output = _validate_agent_result(result, expected_type, operation_name)
     logger.success(f"AI agent completed {operation_name} successfully")
 
     # Log output details based on type
-    output = result.output
     if hasattr(output, "__dict__"):
         for field_name, field_value in output.__dict__.items():
             if isinstance(field_value, str):
