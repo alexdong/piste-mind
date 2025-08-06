@@ -1,8 +1,5 @@
 """Feedback generation agent for tactical epee coaching."""
 
-import json
-from pathlib import Path
-
 from loguru import logger
 from pydantic_ai import Agent
 
@@ -40,151 +37,39 @@ async def generate_feedback(question: Question, answer: Answer) -> Feedback:
 
 if __name__ == "__main__":
     import asyncio
-    import sys
+    import time
 
-    async def main() -> None:  # noqa: C901, PLR0912, PLR0915
-        """Interactive feedback generation for prompt iteration."""
-        logger.info("Starting piste-mind feedback generation tool")
+    from session import SessionManager, SessionType
 
-        # Find available question/answer files
-        question_files = list(Path().glob("*question*.json"))
-        options_files = list(Path().glob("*options*.json"))
+    async def main() -> None:
+        """Generate feedback for a hardcoded question and answer."""
+        # Hardcoded question
+        question = Question(
+            question="You're fencing in the direct elimination round, tied 12-12 with 90 seconds remaining. Your opponent is a tall left-hander who has been successfully using a French grip to keep you at maximum distance throughout the bout. They've been scoring primarily with flicks to your wrist and forearm when you attempt to close distance, and they immediately retreat after each action. Your attacks to their body have been falling short, and when you've tried to accelerate your attacks, they've been catching you with stop-hits to the arm. You notice they're starting to breathe heavily and their retreat is becoming slightly slower. How do you adjust your tactics for these final crucial touches?",
+            options=[
+                "Continue with the same approach but increase your speed and commitment on the attacks, accepting the risk of stop-hits to force them to defend rather than counter-attack",
+                "Switch to a more patient game focused on drawing their attack first, then hitting them with counter-attacks to the arm as they come forward, exploiting their fatigue on the recovery",
+                "Use false attacks and broken tempo to draw out their stop-hit attempts, then hit them with a second intention action to the arm when they extend",
+                "Start making aggressive preparations with the point threatening their arm while advancing slowly, forcing them to either attack first or give up ground until they run out of piste",
+            ],
+        )
 
-        # Try to find files with complete questions (scenario + options)
-        complete_files = question_files + options_files
+        # Hardcoded answer
+        answer = Answer(
+            choice=AnswerChoice.D,
+            explanation="I'll use aggressive preparations to threaten their arm while advancing slowly, exploiting their fatigue and forcing them to deal with immediate danger",
+        )
 
-        if not complete_files:
-            logger.error(
-                "No question files found. Please run scenario.py and choices.py first."
-            )
-            return None
+        feedback = await generate_feedback(question, answer)
+        print(
+            f"\n{'=' * 80}\nFEEDBACK:\n\nAcknowledgment: {feedback.acknowledgment}\n\nAnalysis: {feedback.analysis}\n\nAdvanced Concepts: {feedback.advanced_concepts}\n\nBridge to Mastery: {feedback.bridge_to_mastery}\n{'=' * 80}"
+        )
 
-        # Select question file
-        if len(complete_files) == 1:
-            question_file = complete_files[0]
-        else:
-            print("\nAvailable question files:")
-            for i, file in enumerate(complete_files):
-                print(f"{i + 1}. {file}")
+        # Save to session
+        session_manager = SessionManager()
+        timestamp = time.time()
+        session_manager.save_session(timestamp, question, SessionType.QUESTION)
+        session_manager.save_session(timestamp, answer, SessionType.ANSWER)
+        session_manager.save_session(timestamp, feedback, SessionType.FEEDBACK)
 
-            choice = input("\nSelect question file (number): ").strip()
-            try:
-                question_file = complete_files[int(choice) - 1]
-            except (ValueError, IndexError):
-                logger.error("Invalid selection")
-                return None
-
-        # Load question data
-        with question_file.open() as f:
-            data = json.load(f)
-
-        # Handle different file formats
-        if "scenario" in data and "options" in data:
-            # From choices.py output
-            question = Question(question=data["scenario"], options=data["options"])
-        elif "question" in data and "options" in data:
-            # Standard question format
-            question = Question(**data)
-        else:
-            logger.error("Invalid question file format")
-            return None
-
-        logger.info(f"Loaded question from {question_file}")
-
-        # Display the question
-        print("\n" + "=" * 80)
-        print("TACTICAL SCENARIO:")
-        print("=" * 80)
-        print(question.question)
-        print("\nSTRATEGIC OPTIONS:")
-        for i, option in enumerate(question.options):
-            print(f"\n{chr(65 + i)}. {option}")
-        print("\n" + "=" * 80)
-
-        while True:
-            # Get user's answer
-            print("\nProvide your answer:")
-
-            # Get choice
-            while True:
-                choice_input = input("Your choice (A/B/C/D): ").strip().upper()
-                if choice_input in ["A", "B", "C", "D"]:
-                    choice = AnswerChoice[choice_input]
-                    break
-                print("Please enter A, B, C, or D")
-
-            # Get explanation
-            explanation = input("Your tactical reasoning: ").strip()
-            if not explanation:
-                explanation = "Testing the feedback generation."
-
-            answer = Answer(choice=choice, explanation=explanation)
-            logger.info(f"Answer: {answer.choice} - {answer.explanation}")
-
-            # Generate feedback
-            logger.info("\n🎯 Generating coaching feedback...")
-            feedback = await generate_feedback(question, answer)
-            logger.success("Feedback generated successfully")
-
-            # Display the feedback
-            print("\n" + "=" * 80)
-            print("COACHING FEEDBACK:")
-            print("=" * 80)
-            print(f"\n📌 ACKNOWLEDGMENT:\n{feedback.acknowledgment}")
-            print(f"\n🔍 TACTICAL ANALYSIS:\n{feedback.analysis}")
-            print(f"\n📚 ADVANCED CONCEPTS:\n{feedback.advanced_concepts}")
-            print(f"\n🏆 BRIDGE TO MASTERY:\n{feedback.bridge_to_mastery}")
-            print("=" * 80)
-
-            # Save complete session
-            session_data = {
-                "question": question.question,
-                "options": question.options,
-                "answer": {
-                    "choice": answer.choice.value,
-                    "explanation": answer.explanation,
-                },
-                "feedback": {
-                    "acknowledgment": feedback.acknowledgment,
-                    "analysis": feedback.analysis,
-                    "advanced_concepts": feedback.advanced_concepts,
-                    "bridge_to_mastery": feedback.bridge_to_mastery,
-                },
-            }
-
-            output_path = Path("generated_feedback.json")
-            with output_path.open("w") as f:
-                json.dump(session_data, f, indent=2)
-
-            logger.info(f"✅ Complete session saved to {output_path}")
-
-            # Ask what to do next
-            print("\nOptions:")
-            print("1. Try a different answer for same question (press Enter)")
-            print("2. Save this session with a custom name")
-            print("3. Load a different question")
-            print("4. Exit (q)")
-
-            choice = input("\nYour choice: ").strip().lower()
-
-            if choice in {"q", "4"}:
-                logger.info("Exiting feedback generator")
-                break
-            if choice == "2":
-                custom_name = input("Enter filename (without .json): ").strip()
-                if custom_name:
-                    custom_path = Path(f"{custom_name}.json")
-                    with custom_path.open("w") as f:
-                        json.dump(session_data, f, indent=2)
-                    logger.success(f"Saved to {custom_path}")
-            elif choice == "3":
-                # Reload and let user pick a different question
-                return await main()
-            # Default action (Enter or "1") continues with same question
-
-    # Run the async main function
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("\nInterrupted by user")
-        sys.exit(0)
+    asyncio.run(main())
