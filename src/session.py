@@ -1,7 +1,7 @@
 """Session management for piste-mind training sessions."""
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
@@ -36,9 +36,10 @@ class SessionManager:
             timestamp: Unix timestamp
 
         Returns:
-            Session name string with formatted timestamp
+            Session name string with formatted timestamp in local timezone
         """
-        dt = datetime.fromtimestamp(timestamp, tz=UTC)
+        # Use local timezone - DTZ006 is intentionally ignored here
+        dt = datetime.fromtimestamp(timestamp)  # noqa: DTZ006
         return dt.strftime("%Y%m%d-%H%M%S")
 
     def save_session(
