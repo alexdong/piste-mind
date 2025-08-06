@@ -15,7 +15,7 @@ from rich.rule import Rule
 from src.agent import ModelType, get_model, load_prompt_template, run_agent
 from src.models import Answer, AnswerChoice, Feedback
 from src.scenario import generate_question
-from src.session import SessionManager
+from src.session import SessionManager, SessionType
 
 console = Console()
 
@@ -181,13 +181,17 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
         if save:
             session_manager = SessionManager()
             timestamp = asyncio.get_event_loop().time()
-            session_path = session_manager.save_session(
-                timestamp=timestamp,
-                question=question,
-                answer=user_answer,
-                feedback=feedback,
+
+            # Save each component separately
+            session_manager.save_session(timestamp, question, SessionType.QUESTION)
+            session_manager.save_session(timestamp, user_answer, SessionType.ANSWER)
+            feedback_path = session_manager.save_session(
+                timestamp, feedback, SessionType.FEEDBACK
             )
-            console.print(f"\n[green]✅ Session saved to {session_path}.*[/green]")
+
+            console.print(
+                f"\n[green]✅ Session saved to {feedback_path.parent / feedback_path.stem.rsplit('_', 1)[0]}_*[/green]"
+            )
 
         console.print("\n[bold cyan]🎯 Training session complete![/bold cyan]\n")
 
