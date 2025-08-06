@@ -1,6 +1,7 @@
 """Session management for piste-mind training sessions."""
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -16,9 +17,10 @@ class SessionManager:
         """Initialize session manager.
 
         Args:
-            base_dir: Base directory for saving sessions. Defaults to current directory.
+            base_dir: Base directory for saving sessions. Defaults to sessions/ directory.
         """
-        self.base_dir = base_dir or Path.cwd()
+        self.base_dir = base_dir or Path.cwd() / "sessions"
+        self.base_dir.mkdir(exist_ok=True)
 
     def generate_session_name(self, timestamp: float) -> str:
         """Generate a session name based on timestamp.
@@ -27,9 +29,10 @@ class SessionManager:
             timestamp: Unix timestamp
 
         Returns:
-            Session name string
+            Session name string with formatted timestamp
         """
-        return f"session_{int(timestamp)}"
+        dt = datetime.fromtimestamp(timestamp, tz=UTC)
+        return f"session_{dt.strftime('%Y%m%d_%H%M%S')}"
 
     def save_session(
         self,
