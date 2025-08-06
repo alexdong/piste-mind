@@ -1,8 +1,5 @@
 """Scenario generation for tactical epee problems."""
 
-import json
-from pathlib import Path
-
 from loguru import logger
 from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
@@ -59,16 +56,15 @@ async def generate_question(model: AnthropicModel = MODEL) -> Question:
 if __name__ == "__main__":
     import asyncio
 
+    from session import SessionType, save_session
+
     async def main() -> None:
         """Generate tactical scenarios."""
-        while True:
-            scenario = await generate_scenario()
-            print(f"\n{'=' * 80}\n{scenario.scenario}\n{'=' * 80}")
+        scenario = await generate_scenario()
+        print(f"\n{'=' * 80}\n{scenario.scenario}\n{'=' * 80}")
 
-            with Path("scenario.json").open("w") as f:
-                json.dump({"scenario": scenario.scenario}, f, indent=2)
-
-            if input("\nPress Enter for another, 'q' to quit: ").strip().lower() == "q":
-                break
+        # Save to session
+        session_path = save_session(scenario, SessionType.QUESTION)
+        print(f"\nSaved to: {session_path}")
 
     asyncio.run(main())
