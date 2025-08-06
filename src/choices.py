@@ -44,7 +44,8 @@ if __name__ == "__main__":
     import asyncio
     import time
 
-    from session import SessionManager
+    from models import Question
+    from session import SessionManager, SessionType
 
     async def main() -> None:
         """Generate options for a hardcoded scenario."""
@@ -59,9 +60,13 @@ if __name__ == "__main__":
             print(f"\n{chr(65 + i)}. {option}")
         print("=" * 80)
 
-        # Save to session
-        SessionManager()
-        time.time()
-        # Note: We don't save options separately as they're part of the Question model
+        # Create Question object and save to session
+        question = Question.from_parts(scenario, options)
+        session_manager = SessionManager()
+        timestamp = time.time()
+        session_path = session_manager.save_session(
+            timestamp, question, SessionType.QUESTION
+        )
+        print(f"\nSaved to: {session_path}")
 
     asyncio.run(main())

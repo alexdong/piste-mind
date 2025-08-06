@@ -29,19 +29,6 @@ class SessionManager:
         self.base_dir = base_dir or Path.cwd() / "sessions"
         self.base_dir.mkdir(exist_ok=True)
 
-    def generate_session_name(self, timestamp: float) -> str:
-        """Generate a session name based on timestamp.
-
-        Args:
-            timestamp: Unix timestamp
-
-        Returns:
-            Session name string with formatted timestamp in local timezone
-        """
-        # Use local timezone - DTZ006 is intentionally ignored here
-        dt = datetime.fromtimestamp(timestamp)  # noqa: DTZ006
-        return dt.strftime("%Y%m%d-%H%M%S")
-
     def save_session(
         self,
         timestamp: float,
@@ -58,7 +45,9 @@ class SessionManager:
         Returns:
             Path to the saved file
         """
-        session_name = self.generate_session_name(timestamp)
+        # Use local timezone - DTZ006 is intentionally ignored here
+        dt = datetime.fromtimestamp(timestamp)  # noqa: DTZ006
+        session_name = dt.strftime("%Y%m%d-%H%M%S")
         file_path = self.base_dir / f"{session_name}_{session_type.value}.json"
 
         with file_path.open("w") as f:
