@@ -4,7 +4,7 @@ from loguru import logger
 from pydantic_ai import Agent
 
 from agent import MODEL, load_prompt_template, run_agent
-from models import Answer, AnswerChoice, Feedback, Options, Scenario
+from models import Answer, AnswerChoice, Choices, Feedback, Scenario
 
 # Create agent for generating coaching feedback
 logger.info("Creating feedback agent with temperature=0.3")
@@ -20,7 +20,7 @@ logger.debug("Feedback agent initialized successfully")
 
 
 async def generate_feedback(
-    scenario: Scenario, options: Options, answer: Answer
+    scenario: Scenario, options: Choices, answer: Answer
 ) -> Feedback:
     """Generate coaching feedback for a student's answer using the AI agent."""
     logger.debug(f"Student chose option {answer.choice}: {answer.explanation}")
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         )
 
         # Hardcoded options
-        options = Options(
+        options = Choices(
             options=[
                 "Continue with the same approach but increase your speed and commitment on the attacks, accepting the risk of stop-hits to force them to defend rather than counter-attack",
                 "Switch to a more patient game focused on drawing their attack first, then hitting them with counter-attacks to the arm as they come forward, exploiting their fatigue on the recovery",

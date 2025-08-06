@@ -517,8 +517,8 @@ class Scenario(BaseModel):
     )
 
 
-class Options(BaseModel):
-    """Strategic options for a tactical scenario."""
+class Choices(BaseModel):
+    """Strategic choices for a tactical scenario."""
 
     options: list[str] = Field(
         ...,
@@ -717,7 +717,7 @@ def construct_context(context: ScenarioContext) -> str:
         lines.append(f"      {option.name.replace('_', ' ').title()}: {description}")
 
     # Self-evaluation
-    lines.append("\n💭 YOUR CURRENT STATE:")
+    lines.append("\n💭 YOUR CURRENT STATE:\n")
     for option in SELF_EVALUATION_OPTIONS:
         value = getattr(context.fencer_self_evaluation, option.name)
         description = option.options[value]

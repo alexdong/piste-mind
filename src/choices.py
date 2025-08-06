@@ -5,15 +5,15 @@ from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 
 from agent import MODEL, load_prompt_template, run_agent
-from models import Options, Scenario
+from models import Choices, Scenario
 
 
-def create_options_agent(model: AnthropicModel = MODEL) -> Agent[Options]:
+def create_options_agent(model: AnthropicModel = MODEL) -> Agent[Choices]:
     """Create agent for generating strategic options."""
     logger.info("Creating options agent with temperature=0.5")
     agent = Agent(
         model=model,
-        output_type=Options,
+        output_type=Choices,
         system_prompt="You are an expert epee fencing coach creating strategic options for tactical scenarios.",
         model_settings={"temperature": 0.5},
     )
@@ -23,7 +23,7 @@ def create_options_agent(model: AnthropicModel = MODEL) -> Agent[Options]:
 
 async def generate_options(
     scenario: Scenario, model: AnthropicModel = MODEL
-) -> Options:
+) -> Choices:
     """Generate strategic options for a given scenario."""
     # Create the agent
     options_agent = create_options_agent(model)
@@ -35,7 +35,7 @@ async def generate_options(
     return await run_agent(
         agent=options_agent,
         prompt=prompt,
-        expected_type=Options,
+        expected_type=Choices,
         operation_name="options generation",
     )
 
@@ -47,9 +47,19 @@ if __name__ == "__main__":
 
     async def main() -> None:
         """Generate options for a hardcoded scenario."""
-        # Hardcoded scenario
         scenario = Scenario(
-            scenario="You're down 8-11 in a DE bout with 45 seconds left. Your opponent is an aggressive attacker who has been dominating with explosive advances and powerful fleches. You've noticed they always attack after exactly two advances, and they're starting to breathe heavily after each action. What's your tactical approach?"
+            scenario="""The bout has reached a critical moment in the DE round of 8.
+            You're trailing 8-12 with only 20 seconds remaining, and the psychological weight of potential elimination is crushing.
+            
+            Your opponent, a technically disciplined fencer with a very-long distance preference, has been methodically controlling the bout's rhythm through calculated glide-pause advances and smooth retreats.
+
+            Your current state is precarious: physically drained with burning legs, mentally foggy, and oscillating between desperation and resignation.
+            The strip feels compressed, your visual focus blurred, and your breathing shallow and erratic. Your opponent's conservative approach has systematically dismantled your earlier aggressive strategy,
+            leaving you reactive and uncertain.
+
+            The tactical challenge now centers on breaking your opponent's distance control without falling into their predictable counter-time traps. Their defensive reflex of distance pulling combined with an occasional instant remise means any direct attack risks immediate counteraction. You must find a way to disrupt their carefully maintained spatial rhythm - not through pure aggression, but through subtle tempo manipulation that creates momentary vulnerabilities in their defensive structure.
+            The critical question becomes: Can you reset the bout's momentum by creating a deceptive spatial engagement that forces your opponent out of their meticulously constructed defensive comfort zone, all while managing your rapidly depleting physical and mental resources?
+            """
         )
 
         options = await generate_options(scenario)
@@ -59,7 +69,7 @@ if __name__ == "__main__":
         print("=" * 80)
 
         # Save scenario and options separately
-        scenario_path = save_session(scenario, SessionType.QUESTION)
+        scenario_path = save_session(scenario, SessionType.CHOICES)
         print(f"\nScenario saved to: {scenario_path}")
         # Note: Options are part of the interaction flow but not saved separately
 

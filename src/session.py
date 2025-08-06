@@ -15,24 +15,27 @@ class SessionType(Enum):
 
     QUESTION = "question"
     ANSWER = "answer"
+    CHOICES = "choices"
     FEEDBACK = "feedback"
 
 
 def save_session(
     data: BaseModel,
     session_type: SessionType,
+    base_dir: Path | None = None,
 ) -> Path:
     """Save session data to disk.
 
     Args:
         data: The data to save (Question, Answer, or Feedback model)
         session_type: Type of session data
+        base_dir: Base directory for saving sessions. Defaults to sessions/ directory.
 
     Returns:
         Path to the saved file
     """
     # Set up base directory
-    base_dir = Path.cwd() / "sessions"
+    base_dir = base_dir or Path.cwd() / "sessions"
     base_dir.mkdir(exist_ok=True)
 
     # Generate timestamp and session name

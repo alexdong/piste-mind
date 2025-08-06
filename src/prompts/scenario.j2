@@ -51,33 +51,9 @@ You MUST follow these official epee competition rules when creating scenarios:
 - Double touches are common in epee - both fencers score if they hit within 40ms
 - Passivity warnings only occur after 1 minute of no scoring
 
-## CRITICAL: Scenario Variety Requirements
-
-You MUST create a scenario that is distinctly different from typical situations. 
-
-**Randomly select ONE of these scenario categories for this problem:**
-1. **Time Pressure Scenarios** - Final seconds, priority decisions, clock management
-2. **Physical/Fatigue Management** - Dealing with tiredness, injury, or physical limitations
-3. **Psychological Warfare** - Momentum shifts, confidence games, mental pressure
-4. **Equipment/Environmental** - Equipment issues, referee tendencies, venue conditions
-5. **Opponent Adaptation** - Mid-bout tactical switches, unexpected style changes
-6. **Distance/Timing Puzzles** - Complex distance games, tempo changes, preparation timing
-7. **Counter-Strategy Scenarios** - Opponent has figured you out, need new approach
-
-## Generated Context for This Scenario:
+## Here is a detailed description for the tactical scenario you need to create:
 
 {{ context }}
-
-## Example Scenarios for Inspiration (create something DIFFERENT from these):
-
-### Example 1: Equipment Malfunction Under Pressure
-"Tied 12-12 with 90 seconds left in the DE quarter-final. Your opponent is a tall defensive fencer who excels at drawing attacks. Your body cord intermittently fails, causing several halts. The referee is getting impatient and you sense they might give you a red card for non-working equipment. The opponent has noticed your equipment issues and is now pressing forward more aggressively, trying to force you into rushed attacks while you're distracted."
-
-### Example 2: Tactical Adaptation Crisis
-"Leading 4-3 with 1:00 remaining in a pool bout. Your opponent, who spent the first half attacking your arm, suddenly switches to deep lunges targeting your foot. They've scored twice with this new tactic. You notice they're deliberately showing the arm preparation to bait your habitual arm touch before dropping low. Your thigh muscles are burning from the low-line defensive actions."
-
-### Example 3: Psychological Momentum Battle
-"Trailing 4-8 with 2:30 left in a team match where your team needs every point. Your opponent has been celebrating dramatically after each touch, clearly trying to intimidate. The crowd is cheering for them. However, you notice they always glance at their coach before attacking, telegraphing their intentions. Your confidence is shaken but you see an opportunity."
 
 ## Requirements:
 
@@ -85,8 +61,9 @@ Create a tactical epee scenario that includes:
 
 1. **Concise Context** (2-3 paragraphs maximum): 
    - Current score and time remaining (use the random parameters above)
-   - Key opponent characteristics (incorporate the random opponent type)
-   - One or two critical tactical factors that influence the decision
+   - Any equipment or environmental factors at play
+   - Key opponent characteristics 
+   - Your current physical and mental state
    - Any observable changes in momentum or physical state
 
 2. **Tactical Focus**:
@@ -95,29 +72,17 @@ Create a tactical epee scenario that includes:
    - Keep technical details focused and relevant
    - Make the scenario feel fresh and unique
 
-3. **Clear Decision Point**:
-   - End with a clear tactical decision that needs to be made
-   - Set up the scenario so multiple strategic approaches are viable
-   - Ensure the situation has enough complexity for varied solutions
-
-## AVOID These Common Scenarios:
-- Simple "opponent attacks your arm" situations
-- Basic "tall lefty with French grip" without unique elements  
-- Generic "opponent is tired" without specific manifestations
-- Standard distance games without complicating factors
-
 ## Output Format:
 
 Provide your response in the following JSON structure:
 ```json
 {
-  "scenario": "[2-3 paragraph scenario focusing on one key tactical problem]"
+  "scenario": "[3-4 paragraph scenario focusing on one key tactical problem]"
 }
 ```
 
 ## Important Notes:
 - Keep the scenario concise but meaningful
-- Focus on one primary tactical decision
-- Create something UNIQUE using the random parameters provided
+- End with a clear question for the fencer
 - Don't just recycle common coaching scenarios
-- End with a clear question or decision point for the fencer
+- Don't include any options or choices in the scenario itself
