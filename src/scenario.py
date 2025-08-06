@@ -5,8 +5,7 @@ from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 
 from agent import MODEL, load_prompt_template, run_agent
-from choices import generate_options
-from models import Question, Scenario
+from models import Scenario
 
 
 def create_scenario_agent(model: AnthropicModel = MODEL) -> Agent[Scenario]:
@@ -37,20 +36,6 @@ async def generate_scenario(model: AnthropicModel = MODEL) -> Scenario:
         expected_type=Scenario,
         operation_name="scenario generation",
     )
-
-
-async def generate_question(model: AnthropicModel = MODEL) -> Question:
-    """Generate a complete tactical question (scenario + options)."""
-    # Generate the scenario first
-    scenario = await generate_scenario(model)
-    logger.info("Scenario generated successfully")
-
-    # Generate options for the scenario
-    options = await generate_options(scenario, model)
-    logger.info("Options generated successfully")
-
-    # Combine into a complete question
-    return Question.from_parts(scenario, options)
 
 
 if __name__ == "__main__":

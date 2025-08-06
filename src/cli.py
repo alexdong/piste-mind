@@ -13,8 +13,9 @@ from rich.panel import Panel
 from rich.rule import Rule
 
 from src.agent import ModelType, get_model, load_prompt_template, run_agent
+from src.choices import generate_options
 from src.models import Answer, AnswerChoice, Feedback
-from src.scenario import generate_question
+from src.scenario import generate_scenario
 from src.session import SessionType, save_session
 
 console = Console()
@@ -76,23 +77,24 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
             model_settings={"temperature": 0.3},
         )
 
-        # Step 1: Generate and present a question
+        # Step 1: Generate and present a scenario with options
         console.print("\n[bold cyan]🤺 Generating tactical scenario...[/bold cyan]\n")
 
-        # Generate question using the separated agents with the selected model
-        question = await generate_question(selected_model)
+        # Generate scenario and options separately
+        scenario = await generate_scenario(selected_model)
+        options = await generate_options(scenario, selected_model)
 
         # Display the scenario
         console.print(
             Panel(
-                question.question,
+                scenario.scenario,
                 title="[bold yellow]Tactical Scenario[/bold yellow]",
                 border_style="yellow",
             )
         )
 
         console.print("\n[bold]Strategic Options:[/bold]")
-        for choice, option in zip(AnswerChoice, question.options, strict=True):
+        for choice, option in zip(AnswerChoice, options.options, strict=True):
             console.print(f"\n[bold cyan]{choice}.[/bold cyan] {option}")
 
         console.print("\n" + "─" * 80 + "\n")
@@ -125,8 +127,11 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
         # Step 3: Generate and present feedback
         console.print("\n[bold cyan]🎯 Analyzing your response...[/bold cyan]\n")
 
+        # Create a combined object for the template
+        problem = {"question": scenario.scenario, "options": options.options}
+
         feedback_prompt = load_prompt_template(
-            "feedback.j2", problem=question, user_response=user_answer
+            "feedback.j2", problem=problem, user_response=user_answer
         )
 
         feedback = await run_agent(
@@ -180,7 +185,7 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
         # Save if requested
         if save:
             # Save each component separately
-            save_session(question, SessionType.QUESTION)
+            save_session(scenario, SessionType.QUESTION)
             save_session(user_answer, SessionType.ANSWER)
             feedback_path = save_session(feedback, SessionType.FEEDBACK)
 

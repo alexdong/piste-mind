@@ -4,7 +4,7 @@ from loguru import logger
 from pydantic_ai import Agent
 
 from agent import MODEL, load_prompt_template, run_agent
-from models import Answer, AnswerChoice, Feedback, Question
+from models import Answer, AnswerChoice, Feedback, Options, Scenario
 
 # Create agent for generating coaching feedback
 logger.info("Creating feedback agent with temperature=0.3")
@@ -19,12 +19,17 @@ feedback_agent = Agent(
 logger.debug("Feedback agent initialized successfully")
 
 
-async def generate_feedback(question: Question, answer: Answer) -> Feedback:
+async def generate_feedback(
+    scenario: Scenario, options: Options, answer: Answer
+) -> Feedback:
     """Generate coaching feedback for a student's answer using the AI agent."""
     logger.debug(f"Student chose option {answer.choice}: {answer.explanation}")
 
+    # Create a combined object for the template
+    problem = {"question": scenario.scenario, "options": options.options}
+
     # Load and render the prompt template with context
-    prompt = load_prompt_template("feedback.j2", problem=question, user_response=answer)
+    prompt = load_prompt_template("feedback.j2", problem=problem, user_response=answer)
 
     # Run the agent and get the feedback
     return await run_agent(
@@ -42,9 +47,13 @@ if __name__ == "__main__":
 
     async def main() -> None:
         """Generate feedback for a hardcoded question and answer."""
-        # Hardcoded question
-        question = Question(
-            question="You're fencing in the direct elimination round, tied 12-12 with 90 seconds remaining. Your opponent is a tall left-hander who has been successfully using a French grip to keep you at maximum distance throughout the bout. They've been scoring primarily with flicks to your wrist and forearm when you attempt to close distance, and they immediately retreat after each action. Your attacks to their body have been falling short, and when you've tried to accelerate your attacks, they've been catching you with stop-hits to the arm. You notice they're starting to breathe heavily and their retreat is becoming slightly slower. How do you adjust your tactics for these final crucial touches?",
+        # Hardcoded scenario
+        scenario = Scenario(
+            scenario="You're fencing in the direct elimination round, tied 12-12 with 90 seconds remaining. Your opponent is a tall left-hander who has been successfully using a French grip to keep you at maximum distance throughout the bout. They've been scoring primarily with flicks to your wrist and forearm when you attempt to close distance, and they immediately retreat after each action. Your attacks to their body have been falling short, and when you've tried to accelerate your attacks, they've been catching you with stop-hits to the arm. You notice they're starting to breathe heavily and their retreat is becoming slightly slower. How do you adjust your tactics for these final crucial touches?",
+        )
+
+        # Hardcoded options
+        options = Options(
             options=[
                 "Continue with the same approach but increase your speed and commitment on the attacks, accepting the risk of stop-hits to force them to defend rather than counter-attack",
                 "Switch to a more patient game focused on drawing their attack first, then hitting them with counter-attacks to the arm as they come forward, exploiting their fatigue on the recovery",
@@ -59,13 +68,13 @@ if __name__ == "__main__":
             explanation="I'll use aggressive preparations to threaten their arm while advancing slowly, exploiting their fatigue and forcing them to deal with immediate danger",
         )
 
-        feedback = await generate_feedback(question, answer)
+        feedback = await generate_feedback(scenario, options, answer)
         print(
             f"\n{'=' * 80}\nFEEDBACK:\n\nAcknowledgment: {feedback.acknowledgment}\n\nAnalysis: {feedback.analysis}\n\nAdvanced Concepts: {feedback.advanced_concepts}\n\nBridge to Mastery: {feedback.bridge_to_mastery}\n{'=' * 80}"
         )
 
         # Save to session
-        save_session(question, SessionType.QUESTION)
+        save_session(scenario, SessionType.QUESTION)
         save_session(answer, SessionType.ANSWER)
         save_session(feedback, SessionType.FEEDBACK)
 

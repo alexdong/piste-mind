@@ -43,7 +43,6 @@ async def generate_options(
 if __name__ == "__main__":
     import asyncio
 
-    from models import Question
     from session import SessionType, save_session
 
     async def main() -> None:
@@ -59,9 +58,9 @@ if __name__ == "__main__":
             print(f"\n{chr(65 + i)}. {option}")
         print("=" * 80)
 
-        # Create Question object and save to session
-        question = Question.from_parts(scenario, options)
-        session_path = save_session(question, SessionType.QUESTION)
-        print(f"\nSaved to: {session_path}")
+        # Save scenario and options separately
+        scenario_path = save_session(scenario, SessionType.QUESTION)
+        print(f"\nScenario saved to: {scenario_path}")
+        # Note: Options are part of the interaction flow but not saved separately
 
     asyncio.run(main())
