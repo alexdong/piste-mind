@@ -87,11 +87,6 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
         for choice, option in zip(AnswerChoice, options.options, strict=True):
             console.print(f"\n[bold cyan]{choice}.[/bold cyan] {option}")
 
-        # Display recommended option
-        console.print(
-            f"\n[dim italic]Coach's recommendation: Option {chr(65 + options.recommend)}[/dim italic]"
-        )
-
         console.print("\n" + "─" * 80 + "\n")
 
         # Step 2: Get user's answer and explanation
