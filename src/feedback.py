@@ -37,9 +37,8 @@ async def generate_feedback(question: Question, answer: Answer) -> Feedback:
 
 if __name__ == "__main__":
     import asyncio
-    import time
 
-    from session import SessionManager, SessionType
+    from session import SessionType, save_session
 
     async def main() -> None:
         """Generate feedback for a hardcoded question and answer."""
@@ -66,10 +65,8 @@ if __name__ == "__main__":
         )
 
         # Save to session
-        session_manager = SessionManager()
-        timestamp = time.time()
-        session_manager.save_session(timestamp, question, SessionType.QUESTION)
-        session_manager.save_session(timestamp, answer, SessionType.ANSWER)
-        session_manager.save_session(timestamp, feedback, SessionType.FEEDBACK)
+        save_session(question, SessionType.QUESTION)
+        save_session(answer, SessionType.ANSWER)
+        save_session(feedback, SessionType.FEEDBACK)
 
     asyncio.run(main())

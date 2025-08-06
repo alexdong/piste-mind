@@ -1,6 +1,7 @@
 """Session management for piste-mind training sessions."""
 
 import json
+import time
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -17,41 +18,35 @@ class SessionType(Enum):
     FEEDBACK = "feedback"
 
 
-class SessionManager:
-    """Manages saving of training session data."""
+def save_session(
+    data: BaseModel,
+    session_type: SessionType,
+    base_dir: Path | None = None,
+) -> Path:
+    """Save session data to disk.
 
-    def __init__(self, base_dir: Path | None = None) -> None:
-        """Initialize session manager.
+    Args:
+        data: The data to save (Question, Answer, or Feedback model)
+        session_type: Type of session data
+        base_dir: Base directory for saving sessions. Defaults to sessions/ directory.
 
-        Args:
-            base_dir: Base directory for saving sessions. Defaults to sessions/ directory.
-        """
-        self.base_dir = base_dir or Path.cwd() / "sessions"
-        self.base_dir.mkdir(exist_ok=True)
+    Returns:
+        Path to the saved file
+    """
+    # Set up base directory
+    base_dir = base_dir or Path.cwd() / "sessions"
+    base_dir.mkdir(exist_ok=True)
 
-    def save_session(
-        self,
-        timestamp: float,
-        data: BaseModel,
-        session_type: SessionType,
-    ) -> Path:
-        """Save session data to disk.
+    # Generate timestamp and session name
+    timestamp = time.time()
+    # Use local timezone - DTZ006 is intentionally ignored here
+    dt = datetime.fromtimestamp(timestamp)  # noqa: DTZ006
+    session_name = dt.strftime("%Y%m%d-%H%M%S")
 
-        Args:
-            timestamp: Session timestamp
-            data: The data to save (Question, Answer, or Feedback model)
-            session_type: Type of session data
+    # Save file
+    file_path = base_dir / f"{session_name}_{session_type.value}.json"
+    with file_path.open("w") as f:
+        json.dump(data.model_dump(), f, indent=2)
 
-        Returns:
-            Path to the saved file
-        """
-        # Use local timezone - DTZ006 is intentionally ignored here
-        dt = datetime.fromtimestamp(timestamp)  # noqa: DTZ006
-        session_name = dt.strftime("%Y%m%d-%H%M%S")
-        file_path = self.base_dir / f"{session_name}_{session_type.value}.json"
-
-        with file_path.open("w") as f:
-            json.dump(data.model_dump(), f, indent=2)
-
-        logger.debug(f"Saved {session_type.value} to {file_path}")
-        return file_path
+    logger.debug(f"Saved {session_type.value} to {file_path}")
+    return file_path
