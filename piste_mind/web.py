@@ -71,6 +71,17 @@ app, rt = fast_app(
             input[type="radio"]:checked + div .option-letter {
                 color: white;
             }
+            /* Progress bar animation */
+            @keyframes progress {
+                0% { width: 0%; }
+                30% { width: 30%; }
+                60% { width: 60%; }
+                90% { width: 90%; }
+                100% { width: 100%; }
+            }
+            .progress-bar {
+                animation: progress 3s ease-in-out infinite;
+            }
         """),
     ),
     bodykw={"class": "bg-gray-50"},
@@ -107,7 +118,7 @@ async def index() -> Any:  # noqa: ANN401
                 cls="bg-white p-8 rounded-xl shadow-lg mb-8",
             ),
             # Options
-            H2("Strategic Options", cls="text-2xl font-semibold text-gray-800 mb-6"),
+            H2("Your Choices", cls="text-2xl font-semibold text-gray-800 mb-6"),
             Div(
                 *[
                     Label(
@@ -122,6 +133,7 @@ async def index() -> Any:  # noqa: ANN401
                             hx_swap="outerHTML",
                             hx_trigger="change",
                             hx_indicator="#loading",
+                            hx_include="#explanation-text",
                         ),
                         Div(
                             Div(
@@ -162,7 +174,7 @@ async def index() -> Any:  # noqa: ANN401
 
 
 @rt("/select-option/{session_id}", methods=["POST"])
-async def select_option(session_id: str, option: str) -> Any:  # noqa: ANN401
+async def select_option(session_id: str, option: str, explanation: str = "") -> Any:  # noqa: ANN401
     """Handle option selection and show explanation textarea."""
     _ = session_id  # Will be used for session management later
 
@@ -174,22 +186,39 @@ async def select_option(session_id: str, option: str) -> Any:  # noqa: ANN401
             ),
             Form(
                 Textarea(
+                    explanation,  # Preserve the content
                     name="explanation",
+                    id="explanation-text",
                     placeholder="Why did you choose this option? What tactical principles guide your decision?",
                     required=True,
-                    autofocus=True,
+                    autofocus=bool(not explanation),
                     cls="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none resize-none h-32",
                 ),
                 Hidden(name="choice_index", value=option),
                 Button(
                     "Submit",
                     type="submit",
-                    cls="w-full mt-4 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200",
+                    cls="w-full mt-4 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed",
+                    hx_disabled_elt="this",
+                ),
+                # Progress bar container (hidden by default)
+                Div(
+                    Div(
+                        Div(cls="progress-bar h-full bg-blue-600 rounded-full"),
+                        cls="w-full h-2 bg-gray-200 rounded-full overflow-hidden",
+                    ),
+                    P(
+                        "Analyzing your tactical reasoning...",
+                        cls="text-sm text-gray-600 mt-2 text-center animate-pulse",
+                    ),
+                    id="progress-indicator",
+                    cls="htmx-indicator mt-4",
                 ),
                 hx_post=f"/submit-explanation/{session_id}",
                 hx_target="#explanation-area",
                 hx_swap="outerHTML",
                 hx_trigger="submit",
+                hx_indicator="#progress-indicator",
             ),
             cls="bg-white p-8 rounded-xl shadow-lg animate-slide-down",
         ),
