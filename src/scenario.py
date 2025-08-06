@@ -31,7 +31,7 @@ async def generate_scenario(model: AnthropicModel = MODEL) -> Scenario:
     scenario_agent = create_scenario_agent(model)
 
     # Load and render the prompt template
-    prompt = load_prompt_template("initial.j2")
+    prompt = load_prompt_template("scenario.j2")
 
     # Run the agent and get the scenario
     return await run_agent(

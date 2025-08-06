@@ -71,7 +71,7 @@ def load_prompt_template(template_name: str, **context: Any) -> str:  # noqa: AN
     """Load and render a Jinja2 template from the prompts directory.
 
     Args:
-        template_name: Name of the template file (e.g., "initial.j2")
+        template_name: Name of the template file (e.g., "scenario.j2")
         **context: Variables to pass to the template for rendering
 
     Returns:

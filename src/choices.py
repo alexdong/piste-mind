@@ -29,7 +29,7 @@ async def generate_options(
     options_agent = create_options_agent(model)
 
     # Load and render the prompt template with the scenario
-    prompt = load_prompt_template("options.j2", scenario=scenario.scenario)
+    prompt = load_prompt_template("choices.j2", scenario=scenario.scenario)
 
     # Run the agent and get the options
     return await run_agent(
