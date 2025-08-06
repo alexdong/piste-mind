@@ -4,8 +4,8 @@ from loguru import logger
 from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 
-from agent import MODEL, load_prompt_template, run_agent
-from models import Scenario
+from src.agent import MODEL, load_prompt_template, run_agent
+from src.models import Scenario, generate_full_context
 
 
 def create_scenario_agent(model: AnthropicModel = MODEL) -> Agent[Scenario]:
@@ -23,11 +23,18 @@ def create_scenario_agent(model: AnthropicModel = MODEL) -> Agent[Scenario]:
 
 async def generate_scenario(model: AnthropicModel = MODEL) -> Scenario:
     """Generate a new tactical epee scenario using the AI agent."""
+    # Generate the full context
+    context_str = generate_full_context()
+
+    # Log the generated context
+    logger.info("Generated scenario context:")
+    logger.info(f"\n{context_str}")
+
     # Create the agent
     scenario_agent = create_scenario_agent(model)
 
-    # Load and render the prompt template
-    prompt = load_prompt_template("scenario.j2")
+    # Load and render the prompt template with the context
+    prompt = load_prompt_template("scenario.j2", context=context_str)
 
     # Run the agent and get the scenario
     return await run_agent(
@@ -41,7 +48,7 @@ async def generate_scenario(model: AnthropicModel = MODEL) -> Scenario:
 if __name__ == "__main__":
     import asyncio
 
-    from session import SessionType, save_session
+    from src.session import SessionType, save_session
 
     async def main() -> None:
         """Generate tactical scenarios."""

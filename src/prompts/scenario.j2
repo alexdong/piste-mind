@@ -64,22 +64,9 @@ You MUST create a scenario that is distinctly different from typical situations.
 6. **Distance/Timing Puzzles** - Complex distance games, tempo changes, preparation timing
 7. **Counter-Strategy Scenarios** - Opponent has figured you out, need new approach
 
-## Random Seed Parameters (use these to create variety):
-{% set pool_scores = ['leading 4-2', 'trailing 2-3', 'tied 3-3', 'leading 3-1', 'trailing 1-4', 'tied 2-2', 'leading 4-3'] %}
-{% set de_scores = ['leading 14-11', 'trailing 8-12', 'tied 10-10', 'leading 9-7', 'trailing 4-8', 'tied 13-13', 'leading 7-5', 'trailing 11-14'] %}
-{% set team_scores = ['your team leading 23-20, you trail 2-4 in your leg', 'teams tied 15-15, you lead 3-1', 'your team trailing 18-22, tied 2-2 in your leg', 'your team leading 35-30, you trail 0-2'] %}
-{% set time_remaining = ['3:00 remaining', '1:30 remaining', '45 seconds left', '2:15 remaining', 'final 20 seconds', '90 seconds left'] %}
-{% set opponent_types = ['defensive counter-attacker', 'aggressive presser', 'patient distance keeper', 'explosive attacker', 'tactical variator', 'rhythm disruptor'] %}
-{% set contexts = ['pool bout', 'DE round of 32', 'DE round of 8', 'semi-final', 'team match', 'veteran event DE'] %}
-{% set fencer_conditions = ['fresh and sharp', 'slightly fatigued', 'recovering from cramp', 'nursing minor injury', 'mentally frustrated', 'highly confident'] %}
+## Generated Context for This Scenario:
 
-{% set selected_context = contexts | random %}
-**For this scenario, use:**
-- Context: {{ selected_context }}
-- Score: {% if selected_context == 'pool bout' %}{{ pool_scores | random }}{% elif selected_context == 'team match' %}{{ team_scores | random }}{% else %}{{ de_scores | random }}{% endif %}
-- Time: {{ time_remaining }}
-- Opponent: {{ opponent_types | random }}
-- Your condition: {{ fencer_conditions | random }}
+{{ context }}
 
 ## Example Scenarios for Inspiration (create something DIFFERENT from these):
 
