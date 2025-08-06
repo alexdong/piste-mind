@@ -3,18 +3,17 @@
 import asyncio
 
 import click
-from loguru import logger
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.styles import Style
-from pydantic_ai import Agent
 from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
 
-from piste_mind.agent import ModelType, get_model, load_prompt_template, run_agent
+from piste_mind.agent import ModelType, get_model
 from piste_mind.choices import generate_options
-from piste_mind.models import Answer, AnswerChoice, Feedback
+from piste_mind.feedback import generate_feedback
+from piste_mind.models import Answer, AnswerChoice
 from piste_mind.scenario import generate_scenario
 from piste_mind.session import SessionType, save_session
 
@@ -68,15 +67,6 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
         model_type = ModelType[model.upper()]
         selected_model = get_model(model_type)
 
-        # Create feedback agent
-        logger.info(f"Creating feedback agent with {model_type.name} model")
-        feedback_agent = Agent(
-            model=selected_model,
-            output_type=Feedback,
-            system_prompt="You are an expert epee fencing coach providing detailed tactical feedback.",
-            model_settings={"temperature": 0.3},
-        )
-
         # Step 1: Generate and present a scenario with options
         console.print("\n[bold cyan]🤺 Generating tactical scenario...[/bold cyan]\n")
 
@@ -96,6 +86,11 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
         console.print("\n[bold]Strategic Options:[/bold]")
         for choice, option in zip(AnswerChoice, options.options, strict=True):
             console.print(f"\n[bold cyan]{choice}.[/bold cyan] {option}")
+
+        # Display recommended option
+        console.print(
+            f"\n[dim italic]Coach's recommendation: Option {chr(65 + options.recommend)}[/dim italic]"
+        )
 
         console.print("\n" + "─" * 80 + "\n")
 
@@ -127,19 +122,8 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
         # Step 3: Generate and present feedback
         console.print("\n[bold cyan]🎯 Analyzing your response...[/bold cyan]\n")
 
-        # Create a combined object for the template
-        problem = {"question": scenario.scenario, "options": options.options}
-
-        feedback_prompt = load_prompt_template(
-            "feedback.j2", problem=problem, user_response=user_answer
-        )
-
-        feedback = await run_agent(
-            agent=feedback_agent,  # type: ignore[arg-type]
-            prompt=feedback_prompt,
-            expected_type=Feedback,
-            operation_name="feedback generation",
-        )
+        # Use the generate_feedback function from feedback.py
+        feedback = await generate_feedback(scenario, options, user_answer)
 
         # Display feedback with rich formatting
         console.print(
