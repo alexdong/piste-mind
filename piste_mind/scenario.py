@@ -4,8 +4,8 @@ from loguru import logger
 from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 
-from src.agent import MODEL, load_prompt_template, run_agent
-from src.models import Scenario, generate_full_context
+from piste_mind.agent import MODEL, load_prompt_template, run_agent
+from piste_mind.models import Scenario, generate_full_context
 
 
 def create_scenario_agent(model: AnthropicModel = MODEL) -> Agent[Scenario]:
@@ -48,7 +48,7 @@ async def generate_scenario(model: AnthropicModel = MODEL) -> Scenario:
 if __name__ == "__main__":
     import asyncio
 
-    from src.session import SessionType, save_session
+    from piste_mind.session import SessionType, save_session
 
     async def main() -> None:
         """Generate tactical scenarios."""

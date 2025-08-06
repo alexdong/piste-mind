@@ -5,10 +5,10 @@ from pathlib import Path
 
 import jinja2
 
-# Add src directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from models import generate_full_context
+from piste_mind.models import generate_full_context
 
 
 def test_context_generation() -> None:
@@ -32,7 +32,7 @@ def test_template_integration() -> None:
     context = generate_full_context()
 
     # Load and render template
-    template_dir = Path("src/prompts")
+    template_dir = Path("piste_mind/prompts")
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir))
     template = env.get_template("scenario.j2")
     rendered = template.render(context=context)

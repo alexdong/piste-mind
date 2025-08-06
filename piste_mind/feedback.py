@@ -3,8 +3,8 @@
 from loguru import logger
 from pydantic_ai import Agent
 
-from agent import MODEL, load_prompt_template, run_agent
-from models import Answer, AnswerChoice, Choices, Feedback, Scenario
+from piste_mind.agent import MODEL, load_prompt_template, run_agent
+from piste_mind.models import Answer, AnswerChoice, Choices, Feedback, Scenario
 
 # Create agent for generating coaching feedback
 logger.info("Creating feedback agent with temperature=0.3")
@@ -43,7 +43,7 @@ async def generate_feedback(
 if __name__ == "__main__":
     import asyncio
 
-    from session import SessionType, save_session
+    from piste_mind.session import SessionType, save_session
 
     async def main() -> None:
         """Generate feedback for a hardcoded question and answer."""

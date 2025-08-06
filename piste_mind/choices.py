@@ -1,11 +1,13 @@
 """Strategic choices generation for tactical epee scenarios."""
 
+import textwrap
+
 from loguru import logger
 from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 
-from agent import MODEL, load_prompt_template, run_agent
-from models import Choices, Scenario
+from piste_mind.agent import MODEL, load_prompt_template, run_agent
+from piste_mind.models import Choices, Scenario
 
 
 def create_options_agent(model: AnthropicModel = MODEL) -> Agent[Choices]:
@@ -43,12 +45,14 @@ async def generate_options(
 if __name__ == "__main__":
     import asyncio
 
-    from session import SessionType, save_session
+    from piste_mind.session import SessionType, save_session
 
     async def main() -> None:
         """Generate options for a hardcoded scenario."""
         scenario = Scenario(
-            scenario="""The bout has reached a critical moment in the DE round of 8.
+            scenario=textwrap.dedent("""
+            The bout has reached a critical moment in the DE round of 8.
+
             You're trailing 8-12 with only 20 seconds remaining, and the psychological weight of potential elimination is crushing.
             
             Your opponent, a technically disciplined fencer with a very-long distance preference, has been methodically controlling the bout's rhythm through calculated glide-pause advances and smooth retreats.
@@ -58,15 +62,16 @@ if __name__ == "__main__":
             leaving you reactive and uncertain.
 
             The tactical challenge now centers on breaking your opponent's distance control without falling into their predictable counter-time traps. Their defensive reflex of distance pulling combined with an occasional instant remise means any direct attack risks immediate counteraction. You must find a way to disrupt their carefully maintained spatial rhythm - not through pure aggression, but through subtle tempo manipulation that creates momentary vulnerabilities in their defensive structure.
+
             The critical question becomes: Can you reset the bout's momentum by creating a deceptive spatial engagement that forces your opponent out of their meticulously constructed defensive comfort zone, all while managing your rapidly depleting physical and mental resources?
-            """
+            """).strip()
         )
 
-        options = await generate_options(scenario)
+        choices: Choices = await generate_options(scenario)
         print(f"\n{'=' * 80}\nSCENARIO:\n{scenario.scenario}\n\nOPTIONS:")
-        for i, option in enumerate(options.options):
+        for i, option in enumerate(choices.options):
             print(f"\n{chr(65 + i)}. {option}")
-        print(f"\nRECOMMENDED: Option {chr(65 + options.recommend)}")
+        print(f"\nRECOMMENDED: Option {chr(65 + choices.recommend)}")
         print("=" * 80)
 
         # Save scenario and options separately

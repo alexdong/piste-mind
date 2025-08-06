@@ -12,11 +12,11 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
 
-from src.agent import ModelType, get_model, load_prompt_template, run_agent
-from src.choices import generate_options
-from src.models import Answer, AnswerChoice, Feedback
-from src.scenario import generate_scenario
-from src.session import SessionType, save_session
+from piste_mind.agent import ModelType, get_model, load_prompt_template, run_agent
+from piste_mind.choices import generate_options
+from piste_mind.models import Answer, AnswerChoice, Feedback
+from piste_mind.scenario import generate_scenario
+from piste_mind.session import SessionType, save_session
 
 console = Console()
 
