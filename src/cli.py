@@ -146,6 +146,49 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
             Rule("[bold yellow]Coaching Feedback[/bold yellow]", style="yellow")
         )
 
+        # Display rubric scores
+        score_lines = [
+            f"[cyan]1. Clock Pressure:[/cyan] {feedback.score_clock_pressure}/10",
+            f"[cyan]2. Touch Quality:[/cyan] {feedback.score_touch_quality}/10",
+            f"[cyan]3. Initiative:[/cyan] {feedback.score_initiative}/10",
+            f"[cyan]4. Opponent Habits:[/cyan] {feedback.score_opponent_habits}/10",
+            f"[cyan]5. Skill Alignment:[/cyan] {feedback.score_skill_alignment}/10",
+            f"[cyan]6. Piste Geography:[/cyan] {feedback.score_piste_geography}/10",
+            f"[cyan]7. External Factors:[/cyan] {feedback.score_external_factors}/10",
+            f"[cyan]8. Fatigue Management:[/cyan] {feedback.score_fatigue_management}/10",
+            f"[cyan]9. Information Value:[/cyan] {feedback.score_information_value}/10",
+            f"[cyan]10. Psychological Momentum:[/cyan] {feedback.score_psychological_momentum}/10",
+        ]
+
+        total_score = sum(
+            [
+                feedback.score_clock_pressure,
+                feedback.score_touch_quality,
+                feedback.score_initiative,
+                feedback.score_opponent_habits,
+                feedback.score_skill_alignment,
+                feedback.score_piste_geography,
+                feedback.score_external_factors,
+                feedback.score_fatigue_management,
+                feedback.score_information_value,
+                feedback.score_psychological_momentum,
+            ]
+        )
+
+        scores_text = (
+            "\n".join(score_lines)
+            + f"\n\n[bold yellow]TOTAL SCORE: {total_score}/100[/bold yellow]"
+        )
+
+        console.print(
+            Panel(
+                scores_text,
+                title="[bold red]📊 Rubric Scores[/bold red]",
+                border_style="red",
+                padding=(1, 2),
+            )
+        )
+
         console.print(
             Panel(
                 feedback.acknowledgment,

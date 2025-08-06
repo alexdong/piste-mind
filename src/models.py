@@ -70,6 +70,69 @@ class Answer(BaseModel):
 class Feedback(BaseModel):
     """Coaching feedback on a student's tactical decision."""
 
+    # Rubric scores (1-10 for each criterion)
+    score_clock_pressure: int = Field(
+        ...,
+        description="Score for clock pressure consideration (1-10)",
+        ge=1,
+        le=10,
+    )
+    score_touch_quality: int = Field(
+        ...,
+        description="Score for touch quality risk assessment (1-10)",
+        ge=1,
+        le=10,
+    )
+    score_initiative: int = Field(
+        ...,
+        description="Score for initiative ownership (1-10)",
+        ge=1,
+        le=10,
+    )
+    score_opponent_habits: int = Field(
+        ...,
+        description="Score for exploiting opponent habits (1-10)",
+        ge=1,
+        le=10,
+    )
+    score_skill_alignment: int = Field(
+        ...,
+        description="Score for alignment with current skills (1-10)",
+        ge=1,
+        le=10,
+    )
+    score_piste_geography: int = Field(
+        ...,
+        description="Score for piste geography advantage (1-10)",
+        ge=1,
+        le=10,
+    )
+    score_external_factors: int = Field(
+        ...,
+        description="Score for considering refereeing/venue conditions (1-10)",
+        ge=1,
+        le=10,
+    )
+    score_fatigue_management: int = Field(
+        ...,
+        description="Score for fatigue and resource management (1-10)",
+        ge=1,
+        le=10,
+    )
+    score_information_value: int = Field(
+        ...,
+        description="Score for information value consideration (1-10)",
+        ge=1,
+        le=10,
+    )
+    score_psychological_momentum: int = Field(
+        ...,
+        description="Score for psychological momentum (1-10)",
+        ge=1,
+        le=10,
+    )
+
+    # Coaching content
     acknowledgment: str = Field(
         ...,
         description="Recognition of what the student correctly identified",
@@ -132,6 +195,18 @@ if __name__ == "__main__":
 
     # Create sample Feedback
     feedback_data = {
+        # Rubric scores
+        "score_clock_pressure": 9,
+        "score_touch_quality": 8,
+        "score_initiative": 9,
+        "score_opponent_habits": 10,
+        "score_skill_alignment": 8,
+        "score_piste_geography": 10,
+        "score_external_factors": 7,
+        "score_fatigue_management": 9,
+        "score_information_value": 8,
+        "score_psychological_momentum": 9,
+        # Coaching content
         "acknowledgment": "Your instinct to use aggressive preparations while threatening their arm is spot-on because you've correctly identified that your opponent's fatigue is creating a tactical opportunity that wasn't there earlier in the bout.",
         "analysis": "This tactical adjustment brilliantly exploits multiple factors in the current situation. First, by threatening their arm while advancing slowly, you're reversing the distance game - instead of you trying to close distance against their flicks, you're forcing them to deal with an immediate threat. A tired fencer with a French grip will find it increasingly difficult to maintain the precise point control needed for those wrist flicks while retreating. Second, the slow advance with threatening preparations puts them in a psychological bind: they must either attempt another stop-hit (but now against a prepared threat to their arm rather than a committed attack to their body) or continue retreating. Given their fatigue and the limited piste remaining, this creates mounting pressure that compounds with each step backward. The beauty of this approach is that it forces them out of their successful pattern without requiring you to take excessive risks.",
         "advanced_concepts": "The key to executing this strategy is maintaining what we call 'active pressure' - your point must genuinely threaten their arm throughout the advance, not just gesture at it. Keep your point control tight and be ready to close the line if they attempt to circle under for a low-line flick. Your follow-up idea about parry-riposte preparation is excellent advanced thinking. As they tire and feel the pressure of lost ground, they're likely to eventually attempt a more committed attack to break the pattern. Being mentally prepared for this shift allows you to transition from pressure to defensive actions. Common mistakes to avoid: don't rush the advance even if they retreat quickly - maintain your tempo to keep the threat credible. Also, watch for their attempt to circle-six and flick to your flank as a desperation counter.",
@@ -144,4 +219,7 @@ if __name__ == "__main__":
     print(f"   ✓ Analysis: {len(feedback.analysis)} characters")
     print(f"   ✓ Advanced concepts: {len(feedback.advanced_concepts)} characters")
     print(f"   ✓ Bridge to mastery: {len(feedback.bridge_to_mastery)} characters")
+    print(
+        f"   ✓ Total score: {sum([feedback.score_clock_pressure, feedback.score_touch_quality, feedback.score_initiative, feedback.score_opponent_habits, feedback.score_skill_alignment, feedback.score_piste_geography, feedback.score_external_factors, feedback.score_fatigue_management, feedback.score_information_value, feedback.score_psychological_momentum])}/100"
+    )
     print("\n✅ All models working correctly!")
