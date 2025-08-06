@@ -1,4 +1,4 @@
-.PHONY: dev test test-coverage type-coverage update-llms-txt run
+.PHONY: dev test test-coverage type-coverage update-llms-txt run web
 
 dev:
 	uv run ruff check . --fix --unsafe-fixes
@@ -43,4 +43,7 @@ update-llms-txt:
 	@echo "✅ llms/*.txt files updated!"
 
 run:
-	uv run python -m src.cli --model sonnet
+	uv run python -m piste_mind.cli --model sonnet
+
+web:
+	uv run python -m piste_mind.web

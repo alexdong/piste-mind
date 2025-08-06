@@ -1157,6 +1157,7 @@ dependencies = [
     { name = "rich" },
     { name = "streamlit" },
     { name = "toml" },
+    { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
@@ -1182,6 +1183,7 @@ requires-dist = [
     { name = "rich", specifier = ">=13.0.0" },
     { name = "streamlit", specifier = ">=1.0.0" },
     { name = "toml", specifier = ">=0.10.0" },
+    { name = "uvicorn", specifier = ">=0.30.0" },
 ]
 
 [package.metadata.requires-dev]

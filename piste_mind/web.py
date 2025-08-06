@@ -1,0 +1,312 @@
+"""Web interface for piste-mind using FastHTML."""
+
+import os
+from typing import Any
+from uuid import uuid4
+
+from fasthtml.common import (
+    H1,
+    H2,
+    H3,
+    Button,
+    Div,
+    Form,
+    Hidden,
+    Input,
+    Label,
+    Meta,
+    P,
+    Script,
+    Style,
+    Textarea,
+    Title,
+    fast_app,
+)
+from loguru import logger
+
+from piste_mind.choices import generate_options
+from piste_mind.feedback import generate_feedback
+from piste_mind.models import Answer, AnswerChoice
+from piste_mind.scenario import generate_scenario
+
+# Create the FastHTML app
+app, rt = fast_app(
+    hdrs=(
+        Script(src="https://cdn.tailwindcss.com"),
+        Script(src="https://unpkg.com/htmx.org@2.0.0"),
+        Meta(name="viewport", content="width=device-width, initial-scale=1"),
+        Style("""
+            [x-cloak] { display: none !important; }
+            .htmx-indicator { display: none; }
+            .htmx-request .htmx-indicator { display: block; }
+            .htmx-request.htmx-indicator { display: block; }
+            @keyframes fade-in {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-fade-in {
+                animation: fade-in 0.5s ease-out;
+            }
+            @keyframes slide-down {
+                from {
+                    opacity: 0;
+                    max-height: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    max-height: 500px;
+                    transform: translateY(0);
+                }
+            }
+            .animate-slide-down {
+                animation: slide-down 0.3s ease-out;
+                overflow: hidden;
+            }
+            /* Custom radio button styles */
+            input[type="radio"]:checked + div .option-circle {
+                background-color: #3b82f6;
+                border-color: #3b82f6;
+            }
+            input[type="radio"]:checked + div .option-letter {
+                color: white;
+            }
+        """),
+    ),
+    bodykw={"class": "bg-gray-50"},
+)
+
+
+def format_scenario_text(text: str) -> list:
+    """Convert scenario text to HTML paragraphs."""
+    # Split by double newlines for paragraphs
+    paragraphs = text.strip().split("\n\n")
+    return [
+        P(para.strip(), cls="mb-4 text-gray-700 leading-relaxed")
+        for para in paragraphs
+        if para.strip()
+    ]
+
+
+@rt("/")
+async def index() -> Any:  # noqa: ANN401
+    """Main page - shows scenario and options."""
+    # Generate scenario and options
+    scenario = await generate_scenario()
+    choices = await generate_options(scenario)
+
+    # Generate unique session ID
+    session_id = str(uuid4())
+
+    return Title("Piste Mind - Tactical Epee Training"), Div(
+        Div(
+            H1("🤺 Tactical Scenario", cls="text-3xl font-bold text-gray-800 mb-8"),
+            # Scenario Card with proper paragraphs
+            Div(
+                Div(*format_scenario_text(scenario.scenario)),
+                cls="bg-white p-8 rounded-xl shadow-lg mb-8",
+            ),
+            # Options
+            H2("Strategic Options", cls="text-2xl font-semibold text-gray-800 mb-6"),
+            Div(
+                *[
+                    Label(
+                        Input(
+                            type="radio",
+                            name="option",
+                            value=str(i),
+                            id=f"option-{i}",
+                            cls="peer sr-only",
+                            hx_post=f"/select-option/{session_id}",
+                            hx_target="#explanation-area",
+                            hx_swap="outerHTML",
+                            hx_trigger="change",
+                            hx_indicator="#loading",
+                        ),
+                        Div(
+                            Div(
+                                Div(
+                                    f"{chr(65 + i)}",
+                                    cls="option-letter text-lg font-bold text-blue-600",
+                                ),
+                                cls="option-circle flex items-center justify-center w-10 h-10 rounded-full border-2 border-gray-300 transition-all duration-200",
+                            ),
+                            Div(
+                                choices.options[i],
+                                cls="flex-1 text-gray-700",
+                            ),
+                            cls="flex items-start gap-4",
+                        ),
+                        for_=f"option-{i}",
+                        cls="block mb-4 p-5 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-gray-300 hover:bg-gray-50 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-all duration-200",
+                    )
+                    for i in range(len(choices.options))
+                ],
+                cls="bg-white p-8 rounded-xl shadow-lg mb-8",
+            ),
+            # Loading indicator
+            Div(
+                "Loading...",
+                id="loading",
+                cls="htmx-indicator fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg",
+            ),
+            # Area for explanation form (will be inserted here)
+            Div(id="explanation-area"),
+            # Hidden data for later use
+            Hidden(id="scenario", value=scenario.scenario),
+            Hidden(id="options", value="|".join(choices.options)),
+            Hidden(id="recommend", value=str(choices.recommend)),
+            cls="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen",
+        )
+    )
+
+
+@rt("/select-option/{session_id}", methods=["POST"])
+async def select_option(session_id: str, option: str) -> Any:  # noqa: ANN401
+    """Handle option selection and show explanation textarea."""
+    _ = session_id  # Will be used for session management later
+
+    return Div(
+        Div(
+            H3(
+                "Explain your tactical reasoning",
+                cls="text-xl font-semibold text-gray-800 mb-4",
+            ),
+            Form(
+                Textarea(
+                    name="explanation",
+                    placeholder="Why did you choose this option? What tactical principles guide your decision?",
+                    required=True,
+                    autofocus=True,
+                    cls="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none resize-none h-32",
+                ),
+                Hidden(name="choice_index", value=option),
+                Button(
+                    "Submit",
+                    type="submit",
+                    cls="w-full mt-4 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200",
+                ),
+                hx_post=f"/submit-explanation/{session_id}",
+                hx_target="#explanation-area",
+                hx_swap="outerHTML",
+                hx_trigger="submit",
+            ),
+            cls="bg-white p-8 rounded-xl shadow-lg animate-slide-down",
+        ),
+        id="explanation-area",
+        cls="mb-8",
+    )
+
+
+@rt("/submit-explanation/{session_id}", methods=["POST"])
+async def submit_explanation(
+    session_id: str, choice_index: str, explanation: str
+) -> Any:  # noqa: ANN401
+    """Handle explanation submission and show feedback."""
+    _ = session_id  # Will be used for session management later
+
+    # Get the hidden values from the form
+    choice = AnswerChoice(int(choice_index))
+
+    # For now, we'll regenerate the scenario and choices
+    # In production, you'd store these in a session or database
+    scenario = await generate_scenario()
+    choices = await generate_options(scenario)
+
+    # Create answer object
+    answer = Answer(choice=choice, explanation=explanation)
+
+    # Generate feedback
+    feedback = await generate_feedback(scenario, choices, answer)
+
+    # Return the full feedback display
+    return Div(
+        # Show submitted explanation (read-only)
+        Div(
+            H3(
+                f"Your choice: Option {chr(65 + int(choice_index))}",
+                cls="text-lg font-semibold text-gray-700",
+            ),
+            P(explanation, cls="mt-2 text-gray-600 italic"),
+            cls="bg-gray-100 p-6 rounded-lg mb-6",
+        ),
+        # Feedback section
+        Div(
+            # Recommendation
+            Div(
+                H3(
+                    "Coach's Recommended Option",
+                    cls="text-lg font-semibold text-green-800 mb-2",
+                ),
+                P(
+                    f"Option {chr(65 + choices.recommend)}: {choices.options[choices.recommend]}",
+                    cls="text-green-700",
+                ),
+                cls="bg-green-50 border-2 border-green-200 p-6 rounded-lg mb-6",
+            ),
+            # Feedback cards
+            Div(
+                H3("✓ Acknowledgment", cls="text-xl font-semibold text-green-700 mb-3"),
+                P(feedback.acknowledgment, cls="text-gray-700 leading-relaxed"),
+                cls="bg-white p-6 rounded-xl shadow-lg mb-6",
+            ),
+            Div(
+                H3(
+                    "📊 Tactical Analysis",
+                    cls="text-xl font-semibold text-blue-700 mb-3",
+                ),
+                P(
+                    feedback.analysis,
+                    cls="text-gray-700 leading-relaxed whitespace-pre-wrap",
+                ),
+                cls="bg-white p-6 rounded-xl shadow-lg mb-6",
+            ),
+            Div(
+                H3(
+                    "🎯 Advanced Concepts",
+                    cls="text-xl font-semibold text-purple-700 mb-3",
+                ),
+                P(
+                    feedback.advanced_concepts,
+                    cls="text-gray-700 leading-relaxed whitespace-pre-wrap",
+                ),
+                cls="bg-white p-6 rounded-xl shadow-lg mb-6",
+            ),
+            Div(
+                H3(
+                    "🏆 Bridge to Mastery",
+                    cls="text-xl font-semibold text-amber-700 mb-3",
+                ),
+                P(
+                    feedback.bridge_to_mastery,
+                    cls="text-gray-700 leading-relaxed whitespace-pre-wrap",
+                ),
+                cls="bg-white p-6 rounded-xl shadow-lg mb-6",
+            ),
+            # New scenario button
+            Div(
+                Button(
+                    "Try Another Scenario",
+                    onclick="window.location.reload()",
+                    cls="px-8 py-3 bg-gray-800 text-white font-semibold rounded-lg hover:bg-gray-900 transition-colors duration-200",
+                ),
+                cls="text-center mt-8",
+            ),
+            cls="animate-fade-in",
+        ),
+        id="explanation-area",
+        cls="mb-8",
+    )
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    # Set up logging
+    logger.info("Starting Piste Mind web interface...")
+
+    # Get port from environment or use default
+    port = int(os.getenv("PORT", "8000"))
+
+    # Run the server
+    uvicorn.run(app, host="0.0.0.0", port=port)
