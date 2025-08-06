@@ -6,7 +6,7 @@ import random
 from dataclasses import dataclass
 from enum import IntEnum
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 # Constants
 NUM_OPTIONS = 4
@@ -526,18 +526,12 @@ class Choices(BaseModel):
         min_length=NUM_OPTIONS,
         max_length=NUM_OPTIONS,
     )
-
-    @field_validator("options")
-    @classmethod
-    def validate_options(cls, v: list[str]) -> list[str]:
-        """Ensure all options are non-empty strings."""
-        if len(v) != NUM_OPTIONS:
-            msg = f"Exactly {NUM_OPTIONS} options are required"
-            raise ValueError(msg)
-        for i, option in enumerate(v):
-            if not option or not option.strip():
-                raise ValueError(f"Option {i + 1} cannot be empty")
-        return v
+    recommend: int = Field(
+        ...,
+        description="Index (0-3) of the best tactical option for this scenario",
+        ge=0,
+        le=3,
+    )
 
 
 class AnswerChoice(IntEnum):

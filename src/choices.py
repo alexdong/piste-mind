@@ -66,6 +66,7 @@ if __name__ == "__main__":
         print(f"\n{'=' * 80}\nSCENARIO:\n{scenario.scenario}\n\nOPTIONS:")
         for i, option in enumerate(options.options):
             print(f"\n{chr(65 + i)}. {option}")
+        print(f"\nRECOMMENDED: Option {chr(65 + options.recommend)}")
         print("=" * 80)
 
         # Save scenario and options separately

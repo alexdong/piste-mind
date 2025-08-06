@@ -60,6 +60,7 @@ if __name__ == "__main__":
                 "Use false attacks and broken tempo to draw out their stop-hit attempts, then hit them with a second intention action to the arm when they extend",
                 "Start making aggressive preparations with the point threatening their arm while advancing slowly, forcing them to either attack first or give up ground until they run out of piste",
             ],
+            recommend=3,  # Option D is recommended for this scenario
         )
 
         # Hardcoded answer
