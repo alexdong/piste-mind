@@ -40,71 +40,151 @@ async def generate_feedback(question: Question, answer: Answer) -> Feedback:
 
 if __name__ == "__main__":
     import asyncio
+    import sys
 
-    async def main() -> None:
-        """Demonstrate feedback generation with sample data."""
-        logger.info("Starting piste-mind feedback generation demonstration")
+    async def main() -> None:  # noqa: C901, PLR0912, PLR0915
+        """Interactive feedback generation for prompt iteration."""
+        logger.info("Starting piste-mind feedback generation tool")
 
-        # Load question and answer from JSON files
-        question_path = Path("question.json")
-        answer_path = Path("answer.json")
+        # Find available question/answer files
+        question_files = list(Path().glob("*question*.json"))
+        options_files = list(Path().glob("*options*.json"))
 
-        assert question_path.exists(), (
-            f"Question file not found at {question_path}. "
-            f"Please create question.json with sample data."
-        )
-        assert answer_path.exists(), (
-            f"Answer file not found at {answer_path}. "
-            f"Please create answer.json with sample data."
-        )
+        # Try to find files with complete questions (scenario + options)
+        complete_files = question_files + options_files
+
+        if not complete_files:
+            logger.error(
+                "No question files found. Please run scenario.py and choices.py first."
+            )
+            return None
+
+        # Select question file
+        if len(complete_files) == 1:
+            question_file = complete_files[0]
+        else:
+            print("\nAvailable question files:")
+            for i, file in enumerate(complete_files):
+                print(f"{i + 1}. {file}")
+
+            choice = input("\nSelect question file (number): ").strip()
+            try:
+                question_file = complete_files[int(choice) - 1]
+            except (ValueError, IndexError):
+                logger.error("Invalid selection")
+                return None
 
         # Load question data
-        with question_path.open() as f:
-            question_data = json.load(f)
+        with question_file.open() as f:
+            data = json.load(f)
 
-        question = Question(**question_data)
-        logger.info("✅ Loaded question from question.json")
+        # Handle different file formats
+        if "scenario" in data and "options" in data:
+            # From choices.py output
+            question = Question(question=data["scenario"], options=data["options"])
+        elif "question" in data and "options" in data:
+            # Standard question format
+            question = Question(**data)
+        else:
+            logger.error("Invalid question file format")
+            return None
 
-        # Load answer data
-        with answer_path.open() as f:
-            answer_data = json.load(f)
+        logger.info(f"Loaded question from {question_file}")
 
-        # Convert choice letter to AnswerChoice enum
-        choice_letter = answer_data["choice"]
-        answer = Answer(
-            choice=AnswerChoice[choice_letter], explanation=answer_data["explanation"]
-        )
-        logger.info(f"✅ Loaded answer: {answer.choice} - {answer.explanation}")
+        # Display the question
+        print("\n" + "=" * 80)
+        print("TACTICAL SCENARIO:")
+        print("=" * 80)
+        print(question.question)
+        print("\nSTRATEGIC OPTIONS:")
+        for i, option in enumerate(question.options):
+            print(f"\n{chr(65 + i)}. {option}")
+        print("\n" + "=" * 80)
 
-        # Generate feedback
-        logger.info("🎯 Generating coaching feedback...")
-        feedback = await generate_feedback(question, answer)
-        logger.success("Feedback generated successfully")
+        while True:
+            # Get user's answer
+            print("\nProvide your answer:")
 
-        # Display the feedback
-        logger.info("=" * 80)
-        logger.info("Coaching Feedback:")
-        logger.info(f"\n📌 Acknowledgment:\n{feedback.acknowledgment}")
-        logger.info(f"\n🔍 Analysis:\n{feedback.analysis}")
-        logger.info(f"\n📚 Advanced Concepts:\n{feedback.advanced_concepts}")
-        logger.info(f"\n🏆 Bridge to Mastery:\n{feedback.bridge_to_mastery}")
-        logger.info("=" * 80)
+            # Get choice
+            while True:
+                choice_input = input("Your choice (A/B/C/D): ").strip().upper()
+                if choice_input in ["A", "B", "C", "D"]:
+                    choice = AnswerChoice[choice_input]
+                    break
+                print("Please enter A, B, C, or D")
 
-        # Save feedback to JSON
-        feedback_data = {
-            "acknowledgment": feedback.acknowledgment,
-            "analysis": feedback.analysis,
-            "advanced_concepts": feedback.advanced_concepts,
-            "bridge_to_mastery": feedback.bridge_to_mastery,
-        }
+            # Get explanation
+            explanation = input("Your tactical reasoning: ").strip()
+            if not explanation:
+                explanation = "Testing the feedback generation."
 
-        output_path = Path("generated_feedback.json")
-        with output_path.open("w") as f:
-            json.dump(feedback_data, f, indent=2)
+            answer = Answer(choice=choice, explanation=explanation)
+            logger.info(f"Answer: {answer.choice} - {answer.explanation}")
 
-        logger.success(f"Feedback saved to {output_path}")
+            # Generate feedback
+            logger.info("\n🎯 Generating coaching feedback...")
+            feedback = await generate_feedback(question, answer)
+            logger.success("Feedback generated successfully")
+
+            # Display the feedback
+            print("\n" + "=" * 80)
+            print("COACHING FEEDBACK:")
+            print("=" * 80)
+            print(f"\n📌 ACKNOWLEDGMENT:\n{feedback.acknowledgment}")
+            print(f"\n🔍 TACTICAL ANALYSIS:\n{feedback.analysis}")
+            print(f"\n📚 ADVANCED CONCEPTS:\n{feedback.advanced_concepts}")
+            print(f"\n🏆 BRIDGE TO MASTERY:\n{feedback.bridge_to_mastery}")
+            print("=" * 80)
+
+            # Save complete session
+            session_data = {
+                "question": question.question,
+                "options": question.options,
+                "answer": {
+                    "choice": answer.choice.value,
+                    "explanation": answer.explanation,
+                },
+                "feedback": {
+                    "acknowledgment": feedback.acknowledgment,
+                    "analysis": feedback.analysis,
+                    "advanced_concepts": feedback.advanced_concepts,
+                    "bridge_to_mastery": feedback.bridge_to_mastery,
+                },
+            }
+
+            output_path = Path("generated_feedback.json")
+            with output_path.open("w") as f:
+                json.dump(session_data, f, indent=2)
+
+            logger.info(f"✅ Complete session saved to {output_path}")
+
+            # Ask what to do next
+            print("\nOptions:")
+            print("1. Try a different answer for same question (press Enter)")
+            print("2. Save this session with a custom name")
+            print("3. Load a different question")
+            print("4. Exit (q)")
+
+            choice = input("\nYour choice: ").strip().lower()
+
+            if choice in {"q", "4"}:
+                logger.info("Exiting feedback generator")
+                break
+            if choice == "2":
+                custom_name = input("Enter filename (without .json): ").strip()
+                if custom_name:
+                    custom_path = Path(f"{custom_name}.json")
+                    with custom_path.open("w") as f:
+                        json.dump(session_data, f, indent=2)
+                    logger.success(f"Saved to {custom_path}")
+            elif choice == "3":
+                # Reload and let user pick a different question
+                return await main()
+            # Default action (Enter or "1") continues with same question
 
     # Run the async main function
-    logger.info("Launching async main function")
-    asyncio.run(main())
-    logger.info("Program completed successfully")
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("\nInterrupted by user")
+        sys.exit(0)

@@ -75,17 +75,27 @@ uv run python -m src.cli --save
 
 ### Standalone Tools
 
-Generate individual components:
+Generate individual components with interactive iteration:
 
 ```bash
-# Generate a new tactical scenario
+# Generate tactical scenarios interactively
 uv run python -m src.scenario
+# - Press Enter to generate new scenarios
+# - Save scenarios with custom names
+# - Exit with 'q'
 
-# Generate strategic choices for a scenario (requires generated_scenario.json)
+# Generate strategic choices for scenarios
 uv run python -m src.choices
+# - Automatically loads available scenario files
+# - Regenerate different options for the same scenario
+# - Switch between different scenarios
 
-# Generate feedback (requires question.json and answer.json files)
+# Generate feedback interactively
 uv run python -m src.feedback
+# - Load any question file (with scenario + options)
+# - Try different answers for the same question
+# - Get immediate coaching feedback
+# - Save complete sessions
 ```
 
 ### Environment Variables

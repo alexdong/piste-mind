@@ -58,44 +58,58 @@ async def generate_question(model: AnthropicModel = MODEL) -> Question:
 
 if __name__ == "__main__":
     import asyncio
+    import sys
 
     async def main() -> None:
-        """Demonstrate generating a new tactical scenario."""
+        """Interactive scenario generation for prompt iteration."""
         logger.info("Starting piste-mind scenario generation")
-        logger.info("🤺 Generating a new tactical epee scenario...")
 
-        # Generate the scenario
-        scenario = await generate_scenario()
-        logger.success("Scenario generated successfully")
+        while True:
+            logger.info("\n🤺 Generating a new tactical epee scenario...")
 
-        # Display the scenario
-        logger.info("=" * 80)
-        logger.info("Generated Scenario:")
-        logger.info(scenario.scenario)
-        logger.info("=" * 80)
+            # Generate the scenario
+            scenario = await generate_scenario()
+            logger.success("Scenario generated successfully")
 
-        # Save to a JSON file for reference
-        output_data = {"scenario": scenario.scenario}
+            # Display the scenario
+            print("\n" + "=" * 80)
+            print("GENERATED SCENARIO:")
+            print("=" * 80)
+            print(scenario.scenario)
+            print("=" * 80)
 
-        output_path = Path("generated_scenario.json")
-        logger.info(f"Saving scenario to {output_path}")
+            # Save to a JSON file for reference
+            output_data = {"scenario": scenario.scenario}
+            output_path = Path("generated_scenario.json")
 
-        with output_path.open("w") as f:
-            json.dump(output_data, f, indent=2)
+            with output_path.open("w") as f:
+                json.dump(output_data, f, indent=2)
 
-        assert output_path.exists(), (
-            f"Failed to create output file {output_path}. "
-            f"Check file permissions in the current directory."
-        )
-        assert output_path.stat().st_size > 0, (
-            f"Output file {output_path} was created but is empty. "
-            f"JSON serialization may have failed."
-        )
+            logger.info(f"✅ Scenario saved to {output_path}")
 
-        logger.success(f"Scenario saved successfully to {output_path}")
-        logger.info("✅ Scenario saved to generated_scenario.json")
+            # Ask if user wants to generate another
+            print("\nOptions:")
+            print("1. Generate another scenario (press Enter)")
+            print("2. Save this scenario with a custom name")
+            print("3. Exit (q)")
+
+            choice = input("\nYour choice: ").strip().lower()
+
+            if choice in {"q", "3"}:
+                logger.info("Exiting scenario generator")
+                break
+            if choice == "2":
+                custom_name = input("Enter filename (without .json): ").strip()
+                if custom_name:
+                    custom_path = Path(f"{custom_name}.json")
+                    with custom_path.open("w") as f:
+                        json.dump(output_data, f, indent=2)
+                    logger.success(f"Saved to {custom_path}")
+            # Default action (Enter or "1") continues the loop
 
     # Run the async main function
-    logger.info("Launching async main function")
-    asyncio.run(main())
-    logger.info("Program completed successfully")
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("\nInterrupted by user")
+        sys.exit(0)
