@@ -1,38 +1,90 @@
-"""Question generation agent for tactical epee scenarios."""
+"""Question and options generation agents for tactical epee scenarios."""
 
 import json
 from pathlib import Path
 
 from loguru import logger
 from pydantic_ai import Agent
+from pydantic_ai.models.anthropic import AnthropicModel
 
 from agent import MODEL, load_prompt_template, run_agent
-from models import NUM_OPTIONS, AnswerChoice, Question
-
-# Create agent for generating tactical questions
-# Temperature 0.7 provides good balance between creativity and consistency
-logger.info("Creating question agent with temperature=0.7")
-question_agent = Agent(
-    model=MODEL,
-    output_type=Question,
-    system_prompt="You are an expert epee fencing coach creating tactical scenarios.",
-    model_settings={"temperature": 0.7},
-)
-logger.debug("Question agent initialized successfully")
+from models import NUM_OPTIONS, AnswerChoice, Options, Question, Scenario
 
 
-async def generate_question() -> Question:
-    """Generate a new tactical epee question using the AI agent."""
+def create_scenario_agent(model: AnthropicModel = MODEL) -> Agent[Scenario]:
+    """Create agent for generating tactical scenarios."""
+    logger.info("Creating scenario agent with temperature=0.7")
+    agent = Agent(
+        model=model,
+        output_type=Scenario,
+        system_prompt="You are an expert epee fencing coach creating tactical scenarios.",
+        model_settings={"temperature": 0.7},
+    )
+    logger.debug("Scenario agent initialized successfully")
+    return agent  # type: ignore[return-value]
+
+
+def create_options_agent(model: AnthropicModel = MODEL) -> Agent[Options]:
+    """Create agent for generating strategic options."""
+    logger.info("Creating options agent with temperature=0.5")
+    agent = Agent(
+        model=model,
+        output_type=Options,
+        system_prompt="You are an expert epee fencing coach creating strategic options for tactical scenarios.",
+        model_settings={"temperature": 0.5},
+    )
+    logger.debug("Options agent initialized successfully")
+    return agent  # type: ignore[return-value]
+
+
+async def generate_scenario(model: AnthropicModel = MODEL) -> Scenario:
+    """Generate a new tactical epee scenario using the AI agent."""
+    # Create the agent
+    scenario_agent = create_scenario_agent(model)
+
     # Load and render the prompt template
     prompt = load_prompt_template("initial.j2")
 
-    # Run the agent and get the question
+    # Run the agent and get the scenario
     return await run_agent(
-        agent=question_agent,
+        agent=scenario_agent,
         prompt=prompt,
-        expected_type=Question,
-        operation_name="question generation",
+        expected_type=Scenario,
+        operation_name="scenario generation",
     )
+
+
+async def generate_options(
+    scenario: Scenario, model: AnthropicModel = MODEL
+) -> Options:
+    """Generate strategic options for a given scenario."""
+    # Create the agent
+    options_agent = create_options_agent(model)
+
+    # Load and render the prompt template with the scenario
+    prompt = load_prompt_template("options.j2", scenario=scenario.scenario)
+
+    # Run the agent and get the options
+    return await run_agent(
+        agent=options_agent,
+        prompt=prompt,
+        expected_type=Options,
+        operation_name="options generation",
+    )
+
+
+async def generate_question(model: AnthropicModel = MODEL) -> Question:
+    """Generate a complete tactical question (scenario + options)."""
+    # Generate the scenario first
+    scenario = await generate_scenario(model)
+    logger.info("Scenario generated successfully")
+
+    # Generate options for the scenario
+    options = await generate_options(scenario, model)
+    logger.info("Options generated successfully")
+
+    # Combine into a complete question
+    return Question.from_parts(scenario, options)
 
 
 if __name__ == "__main__":
@@ -43,8 +95,19 @@ if __name__ == "__main__":
         logger.info("Starting piste-mind question generation")
         logger.info("🤺 Generating a new tactical epee scenario...")
 
-        question = await generate_question()
-        logger.success("Question generated successfully")
+        # First generate just the scenario
+        scenario = await generate_scenario()
+        logger.success("Scenario generated successfully")
+        logger.info(f"Scenario: {scenario.scenario[:100]}...")
+
+        # Then generate options for that scenario
+        logger.info("🎯 Generating strategic options...")
+        options = await generate_options(scenario)
+        logger.success("Options generated successfully")
+
+        # Combine into a complete question
+        question = Question.from_parts(scenario, options)
+        logger.success("Complete question assembled")
 
         # Display the generated question
         logger.info("Formatting question for display")

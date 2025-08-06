@@ -3,7 +3,7 @@
 import os
 from enum import Enum
 from pathlib import Path
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from jinja2 import Template
 from loguru import logger
@@ -67,12 +67,12 @@ MODEL = get_model(_default_model_type)
 T = TypeVar("T", bound=BaseModel)
 
 
-def load_prompt_template(template_name: str, **context: BaseModel) -> str:
+def load_prompt_template(template_name: str, **context: Any) -> str:  # noqa: ANN401
     """Load and render a Jinja2 template from the prompts directory.
 
     Args:
         template_name: Name of the template file (e.g., "initial.j2")
-        **context: Pydantic models to pass to the template for rendering
+        **context: Variables to pass to the template for rendering
 
     Returns:
         Rendered prompt string

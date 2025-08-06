@@ -21,8 +21,41 @@ class AnswerChoice(IntEnum):
         return self.name
 
 
+class Scenario(BaseModel):
+    """A tactical epee scenario without options."""
+
+    scenario: str = Field(
+        ...,
+        description="Detailed tactical scenario including score, time, and opponent analysis",
+        min_length=100,
+    )
+
+
+class Options(BaseModel):
+    """Strategic options for a tactical scenario."""
+
+    options: list[str] = Field(
+        ...,
+        description="Four distinct tactical approaches to the scenario",
+        min_length=NUM_OPTIONS,
+        max_length=NUM_OPTIONS,
+    )
+
+    @field_validator("options")
+    @classmethod
+    def validate_options(cls, v: list[str]) -> list[str]:
+        """Ensure all options are non-empty strings."""
+        if len(v) != NUM_OPTIONS:
+            msg = f"Exactly {NUM_OPTIONS} options are required"
+            raise ValueError(msg)
+        for i, option in enumerate(v):
+            if not option or not option.strip():
+                raise ValueError(f"Option {i + 1} cannot be empty")
+        return v
+
+
 class Question(BaseModel):
-    """A tactical epee scenario with multiple strategic options."""
+    """A complete tactical scenario with options (combines Scenario and Options)."""
 
     question: str = Field(
         ...,
@@ -47,6 +80,11 @@ class Question(BaseModel):
             if not option or not option.strip():
                 raise ValueError(f"Option {i + 1} cannot be empty")
         return v
+
+    @classmethod
+    def from_parts(cls, scenario: Scenario, options: Options) -> "Question":
+        """Create a Question from separate Scenario and Options."""
+        return cls(question=scenario.scenario, options=options.options)
 
 
 class Answer(BaseModel):
