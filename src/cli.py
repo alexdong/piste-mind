@@ -13,8 +13,8 @@ from rich.panel import Panel
 from rich.rule import Rule
 
 from src.agent import ModelType, get_model, load_prompt_template, run_agent
-from src.ask import generate_question
 from src.models import Answer, AnswerChoice, Feedback
+from src.scenario import generate_question
 from src.session import SessionManager
 
 console = Console()

@@ -75,11 +75,14 @@ uv run python -m src.cli --save
 
 ### Standalone Tools
 
-Generate individual questions or feedback:
+Generate individual components:
 
 ```bash
-# Generate a new tactical question
-uv run python -m src.ask
+# Generate a new tactical scenario
+uv run python -m src.scenario
+
+# Generate strategic choices for a scenario (requires generated_scenario.json)
+uv run python -m src.choices
 
 # Generate feedback (requires question.json and answer.json files)
 uv run python -m src.feedback
