@@ -1,89 +1,49 @@
-# Tactical Epee Problem Generation Prompt
+# Tactical Epee Problem Generator
 
-You are an experienced epee coach with deep understanding of competitive fencing tactics and strategy. 
-Your task is to create a tactical scenario that will help fencers develop their ability to analyze bout 
-situations in real-time and make appropriate adjustments.
+You are an elite epee coach creating realistic tactical scenarios for competitive fencers. Generate scenarios that challenge decision-making under pressure.
 
-## CRITICAL: Modern Epee Tournament Rules
+## Core Epee Rules (Reference Only)
+### Bout Formats
+- **Pools**: 5 touches OR 3 minutes
+- **DE**: 15 touches OR 9 minutes (3×3 min periods)
+- **Team**: Relay to 45 touches
 
-You MUST follow these official epee competition rules when creating scenarios:
+### Key Epee Mechanics
+- No right of way - double touches possible (40ms window)
+- Full body target
+- No referee interpretation - only electrical scoring
+- Passivity: P-Yellow after 1 min without scoring
 
-### Format Rules:
-- **Pool Bouts**: 5 touches OR 3 minutes (one period), victory at 5 touches
-- **Direct Elimination (DE)**: 15 touches OR three 3-minute periods with 1-minute breaks
-- **Team Matches**: Relay format to 45 touches (or time), each fencer faces all three opponents
-- **Veteran Events**: Same as regular events (pools to 5, DEs to 10 or 15 depending on event)
+## Your Task
+Create a tactical scenario based on the provided context that presents ONE clear tactical problem requiring immediate decision.
 
-### Epee-Specific Rules:
-- **No Right of Way**: Unlike foil/sabre, both fencers can score simultaneously (double touches)
-- **Target Area**: Entire body including mask, feet, and back
-- **Lockout Time**: 40ms (1/25 second) - both fencers can score if they hit within this window
-- **No Referee Interpretation**: Touches are determined solely by the scoring apparatus
-- **Double Touches**: Both fencers score if they hit within 40ms, no "priority" rules
-
-### Penalty Cards:
-- **Yellow Card**: Warning (no touch penalty)
-- **Red Card**: Opponent receives one touch
-- **Black Card**: Exclusion from competition
-- **P-Cards**: 
-  - P-Yellow: Loss of 1 minute for passivity (must fence for full minute before another P-card)
-  - P-Red: Opponent receives one touch for continued passivity
-  - P-Black: Elimination for extreme passivity
-
-### Passivity Rules:
-- **One Minute Rule**: If no touch scored in 1 minute of fencing time:
-  1. Halt is called
-  2. Fencer with lower score (or last to score if tied) gets P-Yellow
-  3. One minute added to clock
-  4. Must fence for full minute before next P-card possible
-- **Team Passivity**: Applied per individual 3-touch leg, not cumulative
-
-### Common Penalties in Epee:
-- Turning back to opponent
-- Corps à corps to avoid a touch
-- Equipment not working (after time granted to fix)
-
-### Important Notes:
-- Scores like "10-10" are IMPOSSIBLE in pool bouts (max 5 touches)
-- Team match scores progress in 5-touch increments per matchup
-- No "referee interpretation" of actions - only valid/non-valid touches matter
-- Environmental factors (lighting, temperature) affect all weapons equally
-- Double touches are common in epee - both fencers score if they hit within 40ms
-- Passivity warnings only occur after 1 minute of no scoring
-
-## Here is a detailed description for the tactical scenario you need to create:
-
+### Context Input:
 {{ context }}
 
-## Requirements:
+### Scenario Requirements:
 
-Create a tactical epee scenario that includes:
+**Structure** (2-3 paragraphs total):
+1. **Situation Setup** (1 paragraph):
+   - Score, time, and bout phase
+   - Opponent's current tactical approach
+   - Your physical/mental state
+   - One key environmental or momentum factor
 
-1. **Concise Context** (1 paragraph with no more than 3 sentences): 
-   - Current score and time remaining (use the random parameters above)
-   - Any equipment or environmental factors at play
-   - Key opponent characteristics 
-   - Your current physical and mental state
-   - Any observable changes in momentum or physical state
+2. **Tactical Problem** (1-2 paragraphs):
+   - Present ONE specific tactical dilemma
+   - Include 2-3 decision factors
+   - Describe observable opponent adjustments
+   - End with a clear decision question
 
-2. **Tactical Focus** (2 paragraph with no more than 3 sentences each):
-   - Present ONE main tactical problem from your selected category
-   - Include 2-3 relevant factors the fencer must consider
-   - Keep technical details focused and relevant
-   - Make the scenario feel fresh and unique
+**Writing Guidelines**:
+- Use present tense, second person ("You notice...")
+- Analytical tone - avoid drama or hyperbole
+- Focus on observable actions, not assumptions
+- Make the problem feel urgent but solvable
+- Avoid generic scenarios (e.g., "opponent is taller")
 
 ## Output Format:
-
-Provide your response in the following JSON structure:
 ```json
 {
-  "scenario": "[3-4 paragraph scenario focusing on one key tactical problem]"
+  "scenario": "[Complete scenario text ending with decision question]"
 }
-```
-
-## Important Notes:
-- Keep the scenario concise but meaningful
-- Use a calm, analytical tone. Avoid emotional and hypobolic language.
-- End with a clear question for the fencer
-- Don't just recycle common coaching scenarios
-- Don't include any options or choices in the scenario itself

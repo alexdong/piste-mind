@@ -211,3 +211,6 @@ __marimo__/
 
 # Environment variables
 .env
+
+# Cloudflare tunnel config (contains tunnel ID)
+cloudflare-tunnel.yml
