@@ -32,7 +32,7 @@ class SessionManager:
             Session name string with formatted timestamp
         """
         dt = datetime.fromtimestamp(timestamp, tz=UTC)
-        return f"session_{dt.strftime('%Y%m%d_%H%M%S')}"
+        return f"session_{dt.strftime('%Y%m%d-%H%M%S')}"
 
     def save_session(
         self,
@@ -56,7 +56,7 @@ class SessionManager:
         session_path = self.base_dir / session_name
 
         # Save question
-        question_file = session_path.with_suffix(".question.json")
+        question_file = Path(f"{session_path}_question.json")
         self._save_json(
             question_file,
             {"question": question.question, "options": question.options},
@@ -64,7 +64,7 @@ class SessionManager:
         logger.debug(f"Saved question to {question_file}")
 
         # Save answer
-        answer_file = session_path.with_suffix(".answer.json")
+        answer_file = Path(f"{session_path}_answer.json")
         self._save_json(
             answer_file,
             {"choice": answer.choice.value, "explanation": answer.explanation},
@@ -72,7 +72,7 @@ class SessionManager:
         logger.debug(f"Saved answer to {answer_file}")
 
         # Save feedback
-        feedback_file = session_path.with_suffix(".feedback.json")
+        feedback_file = Path(f"{session_path}_feedback.json")
         self._save_json(
             feedback_file,
             {
@@ -84,7 +84,7 @@ class SessionManager:
         )
         logger.debug(f"Saved feedback to {feedback_file}")
 
-        logger.success(f"Session saved to {session_path}.*")
+        logger.success(f"Session saved to {session_path}_*.json")
         return session_path
 
     def _save_json(self, path: Path, data: dict[str, Any]) -> None:
@@ -111,7 +111,7 @@ class SessionManager:
             ValueError: If session data is invalid
         """
         # Load question
-        question_file = session_path.with_suffix(".question.json")
+        question_file = Path(f"{session_path}_question.json")
         if not question_file.exists():
             err = FileNotFoundError(f"Question file not found: {question_file}")
             err.add_note(f"Expected to find {question_file}")
@@ -122,7 +122,7 @@ class SessionManager:
         question = Question(**question_data)
 
         # Load answer
-        answer_file = session_path.with_suffix(".answer.json")
+        answer_file = Path(f"{session_path}_answer.json")
         if not answer_file.exists():
             err = FileNotFoundError(f"Answer file not found: {answer_file}")
             err.add_note(f"Expected to find {answer_file}")
@@ -142,7 +142,7 @@ class SessionManager:
         answer = Answer(choice=choice, explanation=answer_data["explanation"])
 
         # Load feedback
-        feedback_file = session_path.with_suffix(".feedback.json")
+        feedback_file = Path(f"{session_path}_feedback.json")
         if not feedback_file.exists():
             err = FileNotFoundError(f"Feedback file not found: {feedback_file}")
             err.add_note(f"Expected to find {feedback_file}")
@@ -152,23 +152,24 @@ class SessionManager:
             feedback_data = json.load(f)
         feedback = Feedback(**feedback_data)
 
-        logger.info(f"Loaded session from {session_path}.*")
+        logger.info(f"Loaded session from {session_path}_*.json")
         return question, answer, feedback
 
     def list_sessions(self) -> list[Path]:
         """List all saved sessions in the base directory.
 
         Returns:
-            List of session paths (without extensions)
+            List of session paths (without file type suffix)
         """
         # Find all question files
-        question_files = sorted(self.base_dir.glob("session_*.question.json"))
+        question_files = sorted(self.base_dir.glob("session_*_question.json"))
 
-        # Extract session paths without extensions
+        # Extract session paths without file type suffix
         sessions = []
         for qf in question_files:
-            # Remove the .question.json suffix to get base session path
-            session_path = qf.with_suffix("").with_suffix("")
+            # Remove the _question.json suffix to get base session path
+            session_name = qf.stem.replace("_question", "")
+            session_path = self.base_dir / session_name
             sessions.append(session_path)
 
         return sessions
