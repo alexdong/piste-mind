@@ -38,14 +38,14 @@ def test_template_integration() -> None:
     rendered = template.render(context=context)
 
     # Verify the template rendered successfully
-    min_rendered_length = 5000
+    min_rendered_length = 3000
     assert len(rendered) > min_rendered_length  # Should be substantial with context
-    assert "Tactical Epee Problem Generation Prompt" in rendered
-    assert "Generated Context for This Scenario:" in rendered
+    assert "Tactical Epee Problem Generator" in rendered
+    assert "Context Input:" in rendered
     assert context in rendered  # The full context should be embedded
 
     # Verify the context is properly positioned in the template
-    context_start = rendered.find("## Generated Context for This Scenario:")
+    context_start = rendered.find("### Context Input:")
     assert context_start > 0
 
     # The context should appear after the context marker

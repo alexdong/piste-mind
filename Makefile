@@ -1,4 +1,4 @@
-.PHONY: dev test test-coverage type-coverage update-llms-txt run web serve
+.PHONY: dev test test-coverage type-coverage update-llms-txt run web spa serve
 
 dev:
 	uv run ruff check . --fix --unsafe-fixes
@@ -47,6 +47,9 @@ run:
 
 web:
 	uv run python -m piste_mind.web
+
+spa:
+	uv run python -m piste_mind.web_spa
 
 serve:
 	./tools/run_with_tunnel.sh
