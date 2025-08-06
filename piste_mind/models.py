@@ -563,69 +563,6 @@ class Answer(BaseModel):
 class Feedback(BaseModel):
     """Coaching feedback on a student's tactical decision."""
 
-    # Rubric scores (1-10 for each criterion)
-    score_clock_pressure: int = Field(
-        ...,
-        description="Score for clock pressure consideration (1-10)",
-        ge=1,
-        le=10,
-    )
-    score_touch_quality: int = Field(
-        ...,
-        description="Score for touch quality risk assessment (1-10)",
-        ge=1,
-        le=10,
-    )
-    score_initiative: int = Field(
-        ...,
-        description="Score for initiative ownership (1-10)",
-        ge=1,
-        le=10,
-    )
-    score_opponent_habits: int = Field(
-        ...,
-        description="Score for exploiting opponent habits (1-10)",
-        ge=1,
-        le=10,
-    )
-    score_skill_alignment: int = Field(
-        ...,
-        description="Score for alignment with current skills (1-10)",
-        ge=1,
-        le=10,
-    )
-    score_piste_geography: int = Field(
-        ...,
-        description="Score for piste geography advantage (1-10)",
-        ge=1,
-        le=10,
-    )
-    score_external_factors: int = Field(
-        ...,
-        description="Score for considering refereeing/venue conditions (1-10)",
-        ge=1,
-        le=10,
-    )
-    score_fatigue_management: int = Field(
-        ...,
-        description="Score for fatigue and resource management (1-10)",
-        ge=1,
-        le=10,
-    )
-    score_information_value: int = Field(
-        ...,
-        description="Score for information value consideration (1-10)",
-        ge=1,
-        le=10,
-    )
-    score_psychological_momentum: int = Field(
-        ...,
-        description="Score for psychological momentum (1-10)",
-        ge=1,
-        le=10,
-    )
-
-    # Coaching content
     acknowledgment: str = Field(
         ...,
         description="Recognition of what the student correctly identified",

@@ -86,37 +86,12 @@ if __name__ == "__main__":
 
         feedback = await generate_feedback(scenario, options, answer)
 
-        # Display scores
-        print(f"\n{'=' * 80}\nRUBRIC SCORES:")
-        print(f"1. Clock Pressure: {feedback.score_clock_pressure}/10")
-        print(f"2. Touch Quality: {feedback.score_touch_quality}/10")
-        print(f"3. Initiative: {feedback.score_initiative}/10")
-        print(f"4. Opponent Habits: {feedback.score_opponent_habits}/10")
-        print(f"5. Skill Alignment: {feedback.score_skill_alignment}/10")
-        print(f"6. Piste Geography: {feedback.score_piste_geography}/10")
-        print(f"7. External Factors: {feedback.score_external_factors}/10")
-        print(f"8. Fatigue Management: {feedback.score_fatigue_management}/10")
-        print(f"9. Information Value: {feedback.score_information_value}/10")
-        print(f"10. Psychological Momentum: {feedback.score_psychological_momentum}/10")
-        total_score = sum(
-            [
-                feedback.score_clock_pressure,
-                feedback.score_touch_quality,
-                feedback.score_initiative,
-                feedback.score_opponent_habits,
-                feedback.score_skill_alignment,
-                feedback.score_piste_geography,
-                feedback.score_external_factors,
-                feedback.score_fatigue_management,
-                feedback.score_information_value,
-                feedback.score_psychological_momentum,
-            ]
-        )
-        print(f"\nTOTAL SCORE: {total_score}/100")
-
+        # Display feedback
+        print(f"\n{'=' * 80}")
         print(
-            f"\nFEEDBACK:\n\nAcknowledgment: {feedback.acknowledgment}\n\nAnalysis: {feedback.analysis}\n\nAdvanced Concepts: {feedback.advanced_concepts}\n\nBridge to Mastery: {feedback.bridge_to_mastery}\n{'=' * 80}"
+            f"FEEDBACK:\n\nAcknowledgment: {feedback.acknowledgment}\n\nAnalysis: {feedback.analysis}\n\nAdvanced Concepts: {feedback.advanced_concepts}\n\nBridge to Mastery: {feedback.bridge_to_mastery}"
         )
+        print("=" * 80)
 
         # Save to session
         save_session(feedback, SessionType.FEEDBACK)
