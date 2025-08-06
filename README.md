@@ -49,78 +49,22 @@ Built for fencers who know that touches are won in the mind before they're score
 
 ## Usage
 
-### Interactive Training Session
-
-Start an interactive tactical training session:
+Piste-mind provides an interactive training experience through a single command:
 
 ```bash
-uv run python -m src.cli
+# Start an interactive training session
+piste-mind train
+
+# Use a specific model
+piste-mind train --model opus
+
+# Save the session for later review
+piste-mind train --save
 ```
 
-Options:
-- `--model`: Choose AI model (haiku, sonnet, or opus). Default: haiku
-- `--save`: Save session data to files for later review
+## Tips
 
-Examples:
-```bash
-# Basic training session with default model (haiku)
-uv run python -m src.cli
-
-# Use a more advanced model for richer feedback
-uv run python -m src.cli --model sonnet
-
-# Save session for later review
-uv run python -m src.cli --save
-```
-
-### Standalone Tools
-
-Generate individual components with interactive iteration:
-
-```bash
-# Generate tactical scenarios interactively
-uv run python -m src.scenario
-# - Press Enter to generate new scenarios
-# - Save scenarios with custom names
-# - Exit with 'q'
-
-# Generate strategic choices for scenarios
-uv run python -m src.choices
-# - Automatically loads available scenario files
-# - Regenerate different options for the same scenario
-# - Switch between different scenarios
-
-# Generate feedback interactively
-uv run python -m src.feedback
-# - Load any question file (with scenario + options)
-# - Try different answers for the same question
-# - Get immediate coaching feedback
-# - Save complete sessions
-```
-
-### Environment Variables
-
-- `ANTHROPIC_API_KEY`: Your Anthropic API key (required)
-- `PISTE_MIND_MODEL`: Default model to use (HAIKU, SONNET, or OPUS)
-
-## Tech Stack
-
-- **Modern Python tooling**: uv, ruff, pytest, pydantic
-- **Comprehensive documentation**: Ready-to-use guides for common Python packages
-- **GitHub Pages ready**: The `docs/` folder can be directly hosted as a static documentation site
-- **Best practices**: Pre-configured with Python coding standards and project structure
-
-## Project Structure
-
-```
-./
-├── docs/                   # Documentation (GitHub Pages ready)
-├── src/                    # Application code
-├── tests/                  # Test files
-├── logs/                   # Implementation logs
-├── llms/                   # LLM-friendly documentation
-├── Makefile               # Task automation
-├── pyproject.toml         # Project configuration
-├── Python.md              # Python coding standards
-└── CLAUDE.md              # AI assistant instructions
-```
+1. Take time to think through your answer before responding
+2. Be specific in your explanations - the AI provides better feedback with detailed reasoning
+3. Try different models to experience varying coaching styles
+4. Use `--save` to build a library of scenarios for review
