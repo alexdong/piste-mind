@@ -32,7 +32,7 @@ class SessionManager:
             Session name string with formatted timestamp
         """
         dt = datetime.fromtimestamp(timestamp, tz=UTC)
-        return f"session_{dt.strftime('%Y%m%d-%H%M%S')}"
+        return dt.strftime("%Y%m%d-%H%M%S")
 
     def save_session(
         self,
@@ -162,7 +162,7 @@ class SessionManager:
             List of session paths (without file type suffix)
         """
         # Find all question files
-        question_files = sorted(self.base_dir.glob("session_*_question.json"))
+        question_files = sorted(self.base_dir.glob("*_question.json"))
 
         # Extract session paths without file type suffix
         sessions = []
