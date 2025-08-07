@@ -1,6 +1,7 @@
 """Common AI agent utilities for piste-mind."""
 
 import os
+import time
 from enum import Enum
 from pathlib import Path
 from typing import Any, TypeVar
@@ -134,12 +135,15 @@ def _parse_agent_result[T: BaseModel](
         TypeError: If output is not expected type
     """
     if result is None:
+        logger.error(f"AI agent returned None result for {operation_name}")
         err = RuntimeError(f"AI agent returned None result for {operation_name}")
         err.add_note("Check API key configuration and network connectivity")
         err.add_note("Ensure the AI service is available and responding")
         raise err
 
     if not hasattr(result, "output"):
+        logger.error(f"AI agent result missing 'output' attribute for {operation_name}")
+        logger.error(f"Result type: {type(result)}, attributes: {dir(result)}")
         err = AttributeError(
             f"AI agent result missing 'output' attribute for {operation_name}"
         )
@@ -148,6 +152,9 @@ def _parse_agent_result[T: BaseModel](
         raise err
 
     if not isinstance(result.output, expected_type):
+        logger.error(f"Type mismatch for {operation_name}")
+        logger.error(f"Expected: {expected_type.__name__}, Got: {type(result.output)}")
+        logger.debug(f"Output content: {result.output}")
         err = TypeError(
             f"AI agent output is not a {expected_type.__name__} instance for {operation_name}"
         )
@@ -175,12 +182,31 @@ async def run_agent(
     logger.info(f"Starting {operation_name}")
     logger.debug(f"Prompt length: {len(prompt)} chars")
 
+    # Estimate token count (rough approximation: ~4 chars per token)
+    estimated_tokens = len(prompt) // 4
+    logger.debug(f"Estimated prompt tokens: ~{estimated_tokens}")
+
+    # Log the full prompt at debug level
+    logger.debug(f"Full prompt for {operation_name}:\n{prompt}")
+
     logger.debug("Getting AI to generate response")
     logger.info(f"Sending prompt to AI agent for {operation_name}")
+
+    # Time the API call
+    start_time = time.time()
     result = await agent.run(prompt)
+    elapsed_time = time.time() - start_time
+
+    logger.info(f"AI response received in {elapsed_time:.2f} seconds")
 
     logger.debug("Validating and extracting agent output")
     output = _parse_agent_result(result, expected_type, operation_name)
+
+    # Log the response content
+    logger.debug(
+        f"Response from AI for {operation_name}:\n{output.model_dump_json(indent=2)}"
+    )
+
     logger.success(f"AI agent completed {operation_name} successfully")
 
     logger.debug("Logging output details")
