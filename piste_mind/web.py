@@ -38,8 +38,23 @@ app, rt = fast_app(
         Style("""
             [x-cloak] { display: none !important; }
             .htmx-indicator { display: none; }
-            .htmx-request .htmx-indicator { display: block; }
-            .htmx-request.htmx-indicator { display: block; }
+            .htmx-request .htmx-indicator { display: inline-block; }
+            .htmx-request.htmx-indicator { display: inline-block; }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            .spinner {
+                border: 2px solid #f3f3f3;
+                border-top: 2px solid #3498db;
+                border-radius: 50%;
+                width: 16px;
+                height: 16px;
+                animation: spin 1s linear infinite;
+                display: inline-block;
+                margin-right: 8px;
+                vertical-align: middle;
+            }
             @keyframes fade-in {
                 from { opacity: 0; transform: translateY(10px); }
                 to { opacity: 1; transform: translateY(0); }
@@ -196,29 +211,17 @@ async def select_option(session_id: str, option: str, explanation: str = "") -> 
                 ),
                 Hidden(name="choice_index", value=option),
                 Button(
+                    Div(cls="spinner htmx-indicator"),
                     "Submit",
                     type="submit",
                     cls="w-full mt-4 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed",
                     hx_disabled_elt="this",
-                ),
-                # Progress bar container (hidden by default)
-                Div(
-                    Div(
-                        Div(cls="progress-bar h-full bg-blue-600 rounded-full"),
-                        cls="w-full h-2 bg-gray-200 rounded-full overflow-hidden",
-                    ),
-                    P(
-                        "Analyzing your tactical reasoning...",
-                        cls="text-sm text-gray-600 mt-2 text-center animate-pulse",
-                    ),
-                    id="progress-indicator",
-                    cls="htmx-indicator mt-4",
+                    onclick="this.disabled = true; this.form.requestSubmit();",
                 ),
                 hx_post=f"/submit-explanation/{session_id}",
                 hx_target="#explanation-area",
                 hx_swap="outerHTML",
                 hx_trigger="submit",
-                hx_indicator="#progress-indicator",
             ),
             cls="bg-white p-8 rounded-xl shadow-lg animate-slide-down",
         ),
@@ -250,25 +253,33 @@ async def submit_explanation(
 
     # Return the full feedback display
     return Div(
-        # Show submitted explanation (read-only)
+        # Show submitted explanation (read-only) with disabled button
         Div(
-            H3(
-                f"Your choice: Option {chr(65 + int(choice_index))}",
-                cls="text-lg font-semibold text-gray-700",
+            Div(
+                H3(
+                    f"Your Choice: {chr(65 + int(choice_index))}",
+                    cls="text-lg font-semibold text-gray-700",
+                ),
+                P(explanation, cls="mt-2 text-gray-600 italic"),
+                Button(
+                    "✓ Submitted",
+                    type="button",
+                    disabled=True,
+                    cls="w-full mt-4 px-6 py-3 bg-gray-400 text-white font-semibold rounded-lg cursor-not-allowed",
+                ),
             ),
-            P(explanation, cls="mt-2 text-gray-600 italic"),
-            cls="bg-gray-100 p-6 rounded-lg mb-6",
+            cls="bg-white p-8 rounded-xl shadow-lg mb-6",
         ),
         # Feedback section
         Div(
             # Recommendation
             Div(
                 H3(
-                    "Coach's Recommended Option",
+                    f"Coach's Recommendation: {chr(65 + choices.recommend)}",
                     cls="text-lg font-semibold text-green-800 mb-2",
                 ),
                 P(
-                    f"Option {chr(65 + choices.recommend)}: {choices.options[choices.recommend]}",
+                    choices.options[choices.recommend],
                     cls="text-green-700",
                 ),
                 cls="bg-green-50 border-2 border-green-200 p-6 rounded-lg mb-6",
