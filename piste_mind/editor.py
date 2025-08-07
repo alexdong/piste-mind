@@ -1,4 +1,11 @@
-"""Content editor for improving readability of scenarios, choices, and feedback."""
+"""Content editor for improving readability of scenarios, choices, and feedback.
+
+When run as a module, provides CLI options to test editor functionality:
+    python -m piste_mind.editor --mode challenge  # Test only challenge editing
+    python -m piste_mind.editor --mode feedback   # Test only feedback editing
+    python -m piste_mind.editor --mode both       # Test both (default)
+    python -m piste_mind.editor                   # Same as --mode both
+"""
 
 from typing import TypeVar
 
@@ -66,11 +73,12 @@ async def edit_content[T: BaseModel](
 if __name__ == "__main__":
     import asyncio
 
+    import click
+
     from piste_mind.fixtures import challenge_fixture, feedback_fixture
 
-    async def main() -> None:
-        """Test the editor functionality."""
-        # Test Challenge editing
+    async def test_challenge_editing() -> None:
+        """Test Challenge editing functionality."""
         print("\n" + "=" * 80)
         print("TESTING CHALLENGE EDITING")
         print("=" * 80)
@@ -84,7 +92,7 @@ if __name__ == "__main__":
         for i, choice in enumerate(challenge.choices.options):
             print(f"\n{chr(65 + i)}. {choice}")
 
-        # Edit the challenge
+        logger.debug("Editing challenge for better readability")
         edited_challenge = await edit_content(challenge)
 
         print("\n\n[AFTER] EDITED CHALLENGE:")
@@ -94,9 +102,8 @@ if __name__ == "__main__":
         for i, choice in enumerate(edited_challenge.choices.options):
             print(f"\n{chr(65 + i)}. {choice}")
 
-        return
-
-        # Test Feedback editing
+    async def test_feedback_editing() -> None:
+        """Test Feedback editing functionality."""
         print("\n\n" + "=" * 80)
         print("TESTING FEEDBACK EDITING")
         print("=" * 80)
@@ -110,7 +117,7 @@ if __name__ == "__main__":
         print(f"\nAdvanced Concepts:\n{feedback.advanced_concepts}")
         print(f"\nBridge to Mastery:\n{feedback.bridge_to_mastery}")
 
-        # Edit the feedback
+        logger.debug("Editing feedback for better readability")
         edited_feedback = await edit_content(feedback)
 
         print("\n\n[AFTER] EDITED FEEDBACK:")
@@ -120,4 +127,23 @@ if __name__ == "__main__":
         print(f"\nAdvanced Concepts:\n{edited_feedback.advanced_concepts}")
         print(f"\nBridge to Mastery:\n{edited_feedback.bridge_to_mastery}")
 
-    asyncio.run(main())
+    @click.command()
+    @click.option(
+        "--mode",
+        type=click.Choice(["challenge", "feedback", "both"], case_sensitive=False),
+        default="both",
+        help="What to test: challenge editing, feedback editing, or both (default)",
+    )
+    def main(mode: str) -> None:
+        """Test the editor functionality with different modes."""
+
+        async def run_tests() -> None:
+            if mode in ["challenge", "both"]:
+                await test_challenge_editing()
+
+            if mode in ["feedback", "both"]:
+                await test_feedback_editing()
+
+        asyncio.run(run_tests())
+
+    main()
