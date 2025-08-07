@@ -12,8 +12,10 @@ made their choice.
 {{ loop.index }}. {{ option }}
 {% endfor %}
 
+**Coach's Recommendation**: {{ problem.recommendation | upper }}
+
 ## Student's Response:
-**Chosen Answer**: {{ user_response.answer | upper }}
+**Chosen Answer**: {{ user_response.choice | upper }}
 **Explanation**: {{ user_response.explanation }}
 
 ## Your Coaching Response Should:
@@ -21,6 +23,11 @@ made their choice.
 ### 1. **Acknowledge and Validate** (1-2 sentences)
 - Recognize what the student correctly identified in their choice
 - Highlight any particularly insightful observations they made
+- If coach's recommendation differs from the user's choice, provide a critique of the pupil's choice:
+  - explain why the coach's recommendation is still valid
+  - point out any flaws in the student's reasoning
+  - suggest how they could improve their decision-making process
+- If the student's choice aligns with the recommendation, reinforce their understanding
 - Use positive reinforcement while maintaining analytical rigor
 
 ### 2. **Deepen the Analysis** (2-3 paragraphs)
