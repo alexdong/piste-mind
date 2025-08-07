@@ -534,6 +534,13 @@ class Choices(BaseModel):
     )
 
 
+class Challenge(BaseModel):
+    """A complete challenge containing scenario and choices."""
+
+    scenario: Scenario
+    choices: Choices
+
+
 class AnswerChoice(IntEnum):
     """Valid answer choices for tactical scenarios."""
 

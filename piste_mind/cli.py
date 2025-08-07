@@ -12,8 +12,9 @@ from rich.rule import Rule
 
 from piste_mind.agent import ModelType, get_model
 from piste_mind.choices import generate_options
+from piste_mind.editor import edit_content
 from piste_mind.feedback import generate_feedback
-from piste_mind.models import Answer, AnswerChoice
+from piste_mind.models import Answer, AnswerChoice, Challenge
 from piste_mind.scenario import generate_scenario
 from piste_mind.session import SessionType, save_session
 
@@ -74,17 +75,23 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
         scenario = await generate_scenario(selected_model)
         options = await generate_options(scenario, selected_model)
 
-        # Display the scenario
+        # Create challenge and edit for better readability
+        challenge = Challenge(scenario=scenario, choices=options)
+        edited_challenge = await edit_content(challenge, selected_model)
+
+        # Display the edited scenario
         console.print(
             Panel(
-                scenario.scenario,
+                edited_challenge.scenario.scenario,
                 title="[bold yellow]Tactical Scenario[/bold yellow]",
                 border_style="yellow",
             )
         )
 
         console.print("\n[bold]Strategic Options:[/bold]")
-        for choice, option in zip(AnswerChoice, options.options, strict=True):
+        for choice, option in zip(
+            AnswerChoice, edited_challenge.choices.options, strict=True
+        ):
             console.print(f"\n[bold cyan]{choice}.[/bold cyan] {option}")
 
         console.print("\n" + "─" * 80 + "\n")
@@ -117,23 +124,28 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
         # Step 3: Generate and present feedback
         console.print("\n[bold cyan]🎯 Analyzing your response...[/bold cyan]\n")
 
-        # Use the generate_feedback function from feedback.py
+        # Use the generate_feedback function from feedback.py with original scenario/options
         feedback = await generate_feedback(scenario, options, user_answer)
+
+        # Edit feedback for better readability
+        edited_feedback = await edit_content(feedback, selected_model)
 
         # Display feedback with rich formatting
         console.print(
             Rule("[bold yellow]Coaching Feedback[/bold yellow]", style="yellow")
         )
 
-        # Display the recommended option
+        # Display the recommended option (using edited version for display)
         console.print(
             f"\n[bold green]Coach's Recommended Option:[/bold green] {chr(65 + options.recommend)}"
         )
-        console.print(f"[dim]{options.options[options.recommend]}[/dim]\n")
+        console.print(
+            f"[dim]{edited_challenge.choices.options[options.recommend]}[/dim]\n"
+        )
 
         console.print(
             Panel(
-                feedback.acknowledgment,
+                edited_feedback.acknowledgment,
                 title="[green]✓ Acknowledgment[/green]",
                 border_style="green",
                 padding=(1, 2),
@@ -142,7 +154,7 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
 
         console.print(
             Panel(
-                feedback.analysis,
+                edited_feedback.analysis,
                 title="[blue]🔍 Tactical Analysis[/blue]",
                 border_style="blue",
                 padding=(1, 2),
@@ -151,7 +163,7 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
 
         console.print(
             Panel(
-                feedback.advanced_concepts,
+                edited_feedback.advanced_concepts,
                 title="[magenta]📚 Advanced Concepts[/magenta]",
                 border_style="magenta",
                 padding=(1, 2),
@@ -160,7 +172,7 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
 
         console.print(
             Panel(
-                feedback.bridge_to_mastery,
+                edited_feedback.bridge_to_mastery,
                 title="[yellow]🏆 Bridge to Mastery[/yellow]",
                 border_style="yellow",
                 padding=(1, 2),
