@@ -2,7 +2,6 @@
 
 import os
 from typing import Any
-from uuid import uuid4
 
 from fasthtml.common import (
     H1,
@@ -24,10 +23,20 @@ from fasthtml.common import (
 )
 from loguru import logger
 
-from piste_mind.choices import generate_options
-from piste_mind.feedback import generate_feedback
-from piste_mind.models import Answer, AnswerChoice
-from piste_mind.scenario import generate_scenario
+from piste_mind.agent import ModelType, get_model, parse_model_type_from_env
+from piste_mind.db.service import SessionService
+from piste_mind.editor import edit_content
+from piste_mind.models import AnswerChoice, Challenge
+
+# Initialize session service
+session_service = SessionService()
+
+# Get model configuration
+try:
+    model_type = parse_model_type_from_env()
+except ValueError:
+    model_type = ModelType.HAIKU
+model = get_model(model_type)
 
 # Create the FastHTML app
 app, rt = fast_app(
@@ -117,19 +126,27 @@ def format_scenario_text(text: str) -> list:
 @rt("/")
 async def index() -> Any:  # noqa: ANN401
     """Main page - shows scenario and options."""
-    logger.debug("Generating scenario and options for web interface")
-    scenario = await generate_scenario()
-    choices = await generate_options(scenario)
+    logger.info("Creating new training session")
 
-    logger.debug("Generating unique session ID")
-    session_id = str(uuid4())
+    # Create new session
+    session = await session_service.create_session("web", model_type.name.lower())
+
+    # Generate scenario and choices
+    logger.debug("Generating scenario and options for web interface")
+    session = await session_service.generate_scenario_for_session(session.session_id)
+
+    # Edit for readability
+    assert session.scenario is not None, "Scenario should be generated"
+    assert session.choices is not None, "Choices should be generated"
+    challenge = Challenge(scenario=session.scenario, choices=session.choices)
+    edited_challenge = await edit_content(challenge, model)
 
     return Title("Piste Mind - Tactical Epee Training"), Div(
         Div(
             H1("🤺 Tactical Scenario", cls="text-3xl font-bold text-gray-800 mb-8"),
             # Scenario Card with proper paragraphs
             Div(
-                Div(*format_scenario_text(scenario.scenario)),
+                Div(*format_scenario_text(edited_challenge.scenario.scenario)),
                 cls="bg-white p-8 rounded-xl shadow-lg mb-8",
             ),
             # Options
@@ -143,7 +160,7 @@ async def index() -> Any:  # noqa: ANN401
                             value=str(i),
                             id=f"option-{i}",
                             cls="peer sr-only",
-                            hx_post=f"/select-option/{session_id}",
+                            hx_post=f"/select-option/{session.session_id}",
                             hx_target="#explanation-area",
                             hx_swap="outerHTML",
                             hx_trigger="change",
@@ -159,7 +176,7 @@ async def index() -> Any:  # noqa: ANN401
                                 cls="option-circle flex items-center justify-center w-10 h-10 rounded-full border-2 border-gray-300 transition-all duration-200",
                             ),
                             Div(
-                                choices.options[i],
+                                edited_challenge.choices.options[i],
                                 cls="flex-1 text-gray-700",
                             ),
                             cls="flex items-start gap-4",
@@ -167,7 +184,7 @@ async def index() -> Any:  # noqa: ANN401
                         for_=f"option-{i}",
                         cls="block mb-4 p-5 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-gray-300 hover:bg-gray-50 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-all duration-200",
                     )
-                    for i in range(len(choices.options))
+                    for i in range(len(edited_challenge.choices.options))
                 ],
                 cls="bg-white p-8 rounded-xl shadow-lg mb-8",
             ),
@@ -179,10 +196,6 @@ async def index() -> Any:  # noqa: ANN401
             ),
             # Area for explanation form (will be inserted here)
             Div(id="explanation-area"),
-            # Hidden data for later use
-            Hidden(id="scenario", value=scenario.scenario),
-            Hidden(id="options", value="|".join(choices.options)),
-            Hidden(id="recommend", value=str(choices.recommend)),
             cls="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen",
         )
     )
@@ -191,7 +204,9 @@ async def index() -> Any:  # noqa: ANN401
 @rt("/select-option/{session_id}", methods=["POST"])
 async def select_option(session_id: str, option: str, explanation: str = "") -> Any:  # noqa: ANN401
     """Handle option selection and show explanation textarea."""
-    _ = session_id  # Will be used for session management later
+    # Record the choice
+    choice = AnswerChoice(int(option))
+    await session_service.record_choice(session_id, choice)
 
     return Div(
         Div(
@@ -231,25 +246,22 @@ async def select_option(session_id: str, option: str, explanation: str = "") -> 
 
 
 @rt("/submit-explanation/{session_id}", methods=["POST"])
-async def submit_explanation(
-    session_id: str, choice_index: str, explanation: str
-) -> Any:  # noqa: ANN401
+async def submit_explanation(session_id: str, explanation: str) -> Any:  # noqa: ANN401
     """Handle explanation submission and show feedback."""
-    _ = session_id  # Will be used for session management later
+    # Record the explanation
+    await session_service.record_explanation(session_id, explanation)
 
-    logger.debug("Getting hidden values from form submission")
-    choice = AnswerChoice(int(choice_index))
+    # Generate feedback
+    session = await session_service.generate_feedback_for_session(session_id)
 
-    # For now, we'll regenerate the scenario and choices
-    # In production, you'd store these in a session or database
-    scenario = await generate_scenario()
-    choices = await generate_options(scenario)
+    # Complete the session
+    await session_service.complete_session(session_id)
 
-    logger.debug("Creating answer object from form data")
-    answer = Answer(choice=choice, explanation=explanation)
-
-    logger.debug("Generating feedback for user response")
-    feedback = await generate_feedback(scenario, choices, answer)
+    # Edit feedback for readability
+    assert session.feedback is not None, "Feedback should be generated"
+    assert session.user_answer is not None, "User answer should exist"
+    assert session.choices is not None, "Choices should exist"
+    edited_feedback = await edit_content(session.feedback, model)
 
     # Return the full feedback display
     return Div(
@@ -257,10 +269,10 @@ async def submit_explanation(
         Div(
             Div(
                 H3(
-                    f"Your Choice: {chr(65 + int(choice_index))}",
+                    f"Your Choice: {session.user_answer.choice}",
                     cls="text-lg font-semibold text-gray-700",
                 ),
-                P(explanation, cls="mt-2 text-gray-600 italic"),
+                P(session.user_answer.explanation, cls="mt-2 text-gray-600 italic"),
                 Button(
                     "✓ Submitted",
                     type="button",
@@ -275,11 +287,11 @@ async def submit_explanation(
             # Recommendation
             Div(
                 H3(
-                    f"Coach's Recommendation: {chr(65 + choices.recommend)}",
+                    f"Coach's Recommendation: {chr(65 + session.choices.recommend)}",
                     cls="text-lg font-semibold text-green-800 mb-2",
                 ),
                 P(
-                    choices.options[choices.recommend],
+                    session.choices.options[session.choices.recommend],
                     cls="text-green-700",
                 ),
                 cls="bg-green-50 border-2 border-green-200 p-6 rounded-lg mb-6",
@@ -287,7 +299,7 @@ async def submit_explanation(
             # Feedback cards
             Div(
                 H3("✓ Acknowledgment", cls="text-xl font-semibold text-green-700 mb-3"),
-                P(feedback.acknowledgment, cls="text-gray-700 leading-relaxed"),
+                P(edited_feedback.acknowledgment, cls="text-gray-700 leading-relaxed"),
                 cls="bg-white p-6 rounded-xl shadow-lg mb-6",
             ),
             Div(
@@ -296,7 +308,7 @@ async def submit_explanation(
                     cls="text-xl font-semibold text-blue-700 mb-3",
                 ),
                 P(
-                    feedback.analysis,
+                    edited_feedback.analysis,
                     cls="text-gray-700 leading-relaxed whitespace-pre-wrap",
                 ),
                 cls="bg-white p-6 rounded-xl shadow-lg mb-6",
@@ -307,7 +319,7 @@ async def submit_explanation(
                     cls="text-xl font-semibold text-purple-700 mb-3",
                 ),
                 P(
-                    feedback.advanced_concepts,
+                    edited_feedback.advanced_concepts,
                     cls="text-gray-700 leading-relaxed whitespace-pre-wrap",
                 ),
                 cls="bg-white p-6 rounded-xl shadow-lg mb-6",
@@ -318,7 +330,7 @@ async def submit_explanation(
                     cls="text-xl font-semibold text-amber-700 mb-3",
                 ),
                 P(
-                    feedback.bridge_to_mastery,
+                    edited_feedback.bridge_to_mastery,
                     cls="text-gray-700 leading-relaxed whitespace-pre-wrap",
                 ),
                 cls="bg-white p-6 rounded-xl shadow-lg mb-6",
