@@ -18,25 +18,26 @@ def create_scenario_agent(model: AnthropicModel = MODEL) -> Agent[Scenario]:
         model_settings={"temperature": 0.7},
     )
     logger.debug("Scenario agent initialized successfully")
+    logger.debug("Returning agent with pydantic-ai typing quirk")
     return agent  # type: ignore[return-value]
 
 
 async def generate_scenario(model: AnthropicModel = MODEL) -> Scenario:
     """Generate a new tactical epee scenario using the AI agent."""
-    # Generate the full context
+    logger.debug("Generating full context")
     context_str = generate_full_context()
 
-    # Log the generated context
+    logger.debug("Logging generated context")
     logger.info("Generated scenario context:")
     logger.info(f"\n{context_str}")
 
-    # Create the agent
+    logger.debug("Creating scenario agent")
     scenario_agent = create_scenario_agent(model)
 
-    # Load and render the prompt template with the context
+    logger.debug("Loading and rendering prompt template with context")
     prompt = load_prompt_template("scenario.j2", context=context_str)
 
-    # Run the agent and get the scenario
+    logger.debug("Running agent to generate scenario")
     return await run_agent(
         agent=scenario_agent,
         prompt=prompt,
@@ -55,7 +56,7 @@ if __name__ == "__main__":
         scenario = await generate_scenario()
         print(f"\n{'=' * 80}\n{scenario.scenario}\n{'=' * 80}")
 
-        # Save to session
+        logger.debug("Saving scenario to session")
         session_path = save_session(scenario, SessionType.QUESTION)
         print(f"\nSaved to: {session_path}")
 

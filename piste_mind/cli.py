@@ -3,6 +3,7 @@
 import asyncio
 
 import click
+from loguru import logger
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.styles import Style
@@ -64,18 +65,18 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
     """Interactive tactical training session for epee fencers."""
 
     async def run_session() -> None:
-        # Configure model
+        logger.debug("Configuring AI model")
         model_type = ModelType[model.upper()]
         selected_model = get_model(model_type)
 
-        # Step 1: Generate and present a scenario with options
+        logger.debug("Step 1: Generating scenario and options")
         console.print("\n[bold cyan]🤺 Generating tactical scenario...[/bold cyan]\n")
 
-        # Generate scenario and options separately
+        logger.debug("Generating scenario and options separately")
         scenario = await generate_scenario(selected_model)
         options = await generate_options(scenario, selected_model)
 
-        # Create challenge and edit for better readability
+        logger.debug("Creating challenge and editing for readability")
         challenge = Challenge(scenario=scenario, choices=options)
         edited_challenge = await edit_content(challenge, selected_model)
 
@@ -97,10 +98,10 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
         console.print("\n" + "─" * 80 + "\n")
 
         # Step 2: Get user's answer and explanation
-        # Create answer completer
+        logger.debug("Creating answer completer")
         answer_completer = WordCompleter(["A", "B", "C", "D", "a", "b", "c", "d"])
 
-        # Custom style for prompts
+        logger.debug("Setting up custom prompt style")
         style = Style.from_dict(
             {
                 "prompt": "bold cyan",
@@ -108,26 +109,26 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
             }
         )
 
-        # Create prompt session for async input
+        logger.debug("Creating prompt session for async input")
         session = PromptSession(completer=answer_completer, style=style)
 
-        # Get answer choice using parse-don't-validate pattern
+        logger.debug("Getting answer choice from user")
         parsed_choice = await get_user_choice(session)
 
-        # Get explanation
+        logger.debug("Getting explanation from user")
         console.print("\n[bold cyan]Explain your tactical reasoning:[/bold cyan]")
         explanation = await session.prompt_async("> ")
 
-        # Create Answer object using the parsed choice
+        logger.debug("Creating Answer object with parsed choice")
         user_answer = Answer(choice=parsed_choice, explanation=explanation)
 
         # Step 3: Generate and present feedback
         console.print("\n[bold cyan]🎯 Analyzing your response...[/bold cyan]\n")
 
-        # Use the generate_feedback function from feedback.py with original scenario/options
+        logger.debug("Generating feedback using original scenario/options")
         feedback = await generate_feedback(scenario, options, user_answer)
 
-        # Edit feedback for better readability
+        logger.debug("Editing feedback for better readability")
         edited_feedback = await edit_content(feedback, selected_model)
 
         # Display feedback with rich formatting
@@ -181,7 +182,7 @@ def train(model: str, save: bool) -> None:  # noqa: FBT001
 
         # Save if requested
         if save:
-            # Save each component separately
+            logger.debug("Saving each component separately")
             save_session(scenario, SessionType.QUESTION)
             save_session(user_answer, SessionType.ANSWER)
             feedback_path = save_session(feedback, SessionType.FEEDBACK)

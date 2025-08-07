@@ -34,17 +34,17 @@ def save_session(
     Returns:
         Path to the saved file
     """
-    # Set up base directory
+    logger.debug("Setting up base directory for session storage")
     base_dir = base_dir or Path.cwd() / "sessions"
     base_dir.mkdir(exist_ok=True)
 
-    # Generate timestamp and session name
+    logger.debug("Generating timestamp and session name")
     timestamp = time.time()
     # Use local timezone - DTZ006 is intentionally ignored here
     dt = datetime.fromtimestamp(timestamp)  # noqa: DTZ006
     session_name = dt.strftime("%Y%m%d-%H%M%S")
 
-    # Save file
+    logger.debug(f"Saving {session_type.value} session to file")
     file_path = base_dir / f"{session_name}_{session_type.value}.json"
     with file_path.open("w") as f:
         json.dump(data.model_dump(), f, indent=2)

@@ -102,11 +102,11 @@ def format_scenario_text(text: str) -> list:
 @rt("/")
 async def index() -> Any:  # noqa: ANN401
     """Main page - shows scenario and options."""
-    # Generate scenario and options
+    logger.debug("Generating scenario and options for web interface")
     scenario = await generate_scenario()
     choices = await generate_options(scenario)
 
-    # Generate unique session ID
+    logger.debug("Generating unique session ID")
     session_id = str(uuid4())
 
     return Title("Piste Mind - Tactical Epee Training"), Div(
@@ -234,7 +234,7 @@ async def submit_explanation(
     """Handle explanation submission and show feedback."""
     _ = session_id  # Will be used for session management later
 
-    # Get the hidden values from the form
+    logger.debug("Getting hidden values from form submission")
     choice = AnswerChoice(int(choice_index))
 
     # For now, we'll regenerate the scenario and choices
@@ -242,10 +242,10 @@ async def submit_explanation(
     scenario = await generate_scenario()
     choices = await generate_options(scenario)
 
-    # Create answer object
+    logger.debug("Creating answer object from form data")
     answer = Answer(choice=choice, explanation=explanation)
 
-    # Generate feedback
+    logger.debug("Generating feedback for user response")
     feedback = await generate_feedback(scenario, choices, answer)
 
     # Return the full feedback display
@@ -331,11 +331,11 @@ async def submit_explanation(
 if __name__ == "__main__":
     import uvicorn
 
-    # Set up logging
+    logger.debug("Setting up logging for web interface")
     logger.info("Starting Piste Mind web interface...")
 
-    # Get port from environment or use default
+    logger.debug("Getting port from environment or using default")
     port = int(os.getenv("PORT", "8000"))
 
-    # Run the server
+    logger.debug(f"Running server on host 0.0.0.0 port {port}")
     uvicorn.run(app, host="0.0.0.0", port=port)

@@ -12,16 +12,17 @@ from piste_mind.agent import MODEL, load_prompt_template, run_agent
 T = TypeVar("T", bound=BaseModel)
 
 
-def create_editor_agent(model: AnthropicModel = MODEL) -> Agent[T]:
+def create_editor_agent[T: BaseModel](
+    output_type: type[T], model: AnthropicModel = MODEL
+) -> Agent[T]:
     """Create a generic editor agent."""
     logger.info("Creating editor agent with temperature=0.3")
-    agent = Agent(
+    return Agent(
         model=model,
+        output_type=output_type,
         system_prompt="You are an expert editor who rewrites fencing content to be clearer and more understandable while preserving all technical accuracy.",
         model_settings={"temperature": 0.3},
-    )
-    logger.debug("Editor agent initialized successfully")
-    return agent  # type: ignore[return-value]
+    )  # type: ignore[return-value]
 
 
 async def edit_content[T: BaseModel](
@@ -40,17 +41,17 @@ async def edit_content[T: BaseModel](
     content_type = type(content).__name__
     logger.info(f"Editing {content_type} for improved readability")
 
-    # Create agent for the content type
-    agent = create_editor_agent(model)
+    logger.debug(f"Creating agent for {content_type} editing")
+    agent = create_editor_agent(output_type=type(content), model=model)
 
-    # Convert content to dict for the template
+    logger.debug(f"Converting {content_type} to dict for template")
     content_dict = content.model_dump()
 
-    # Load and render the prompt template
+    logger.debug("Loading and rendering editor prompt template")
     prompt = load_prompt_template("editor.j2", content=content_dict)
     logger.debug(f"Prompt for {content_type} editing: {prompt}")
 
-    # Run the agent and get edited content
+    logger.debug(f"Running agent to edit {content_type}")
     edited = await run_agent(
         agent=agent,
         prompt=prompt,
@@ -92,6 +93,8 @@ if __name__ == "__main__":
         print("\nChoices:")
         for i, choice in enumerate(edited_challenge.choices.options):
             print(f"\n{chr(65 + i)}. {choice}")
+
+        return
 
         # Test Feedback editing
         print("\n\n" + "=" * 80)

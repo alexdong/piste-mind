@@ -62,7 +62,7 @@ if __name__ == "__main__":
         )
         print("=" * 80)
 
-        # Save to session
+        logger.debug("Saving feedback to session")
         save_session(feedback, SessionType.FEEDBACK)
 
     asyncio.run(main())

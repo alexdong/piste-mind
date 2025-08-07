@@ -18,6 +18,7 @@ def create_options_agent(model: AnthropicModel = MODEL) -> Agent[Choices]:
         model_settings={"temperature": 0.5},
     )
     logger.debug("Options agent initialized successfully")
+    logger.debug("Returning agent with pydantic-ai typing quirk")
     return agent  # type: ignore[return-value]
 
 
@@ -25,13 +26,13 @@ async def generate_options(
     scenario: Scenario, model: AnthropicModel = MODEL
 ) -> Choices:
     """Generate strategic options for a given scenario."""
-    # Create the agent
+    logger.debug("Creating options agent")
     options_agent = create_options_agent(model)
 
-    # Load and render the prompt template with the scenario
+    logger.debug("Loading and rendering prompt template with scenario")
     prompt = load_prompt_template("choices.j2", scenario=scenario.scenario)
 
-    # Run the agent and get the options
+    logger.debug("Running agent to generate options")
     return await run_agent(
         agent=options_agent,
         prompt=prompt,
@@ -57,7 +58,7 @@ if __name__ == "__main__":
         print(f"\nRECOMMENDED: Option {chr(65 + choices.recommend)}")
         print("=" * 80)
 
-        # Save scenario and options separately
+        logger.debug("Saving scenario and options separately")
         scenario_path = save_session(scenario, SessionType.CHOICES)
         print(f"\nScenario saved to: {scenario_path}")
         # Note: Options are part of the interaction flow but not saved separately

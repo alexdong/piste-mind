@@ -99,7 +99,7 @@ def load_prompt_template(template_name: str, **context: Any) -> str:  # noqa: AN
 
     logger.debug(f"Template loaded successfully, length: {len(template_content)} chars")
 
-    # Render the template with provided context
+    logger.debug("Rendering template with provided context")
     template = Template(template_content)
     rendered_prompt = template.render(**context)
 
@@ -175,15 +175,15 @@ async def run_agent(
     logger.info(f"Starting {operation_name}")
     logger.debug(f"Prompt length: {len(prompt)} chars")
 
-    # Get the AI to generate a response
+    logger.debug("Getting AI to generate response")
     logger.info(f"Sending prompt to AI agent for {operation_name}")
     result = await agent.run(prompt)
 
-    # Validate and extract output
+    logger.debug("Validating and extracting agent output")
     output = _parse_agent_result(result, expected_type, operation_name)
     logger.success(f"AI agent completed {operation_name} successfully")
 
-    # Log output details
+    logger.debug("Logging output details")
     for field_name, field_value in output.__dict__.items():
         if isinstance(field_value, str):
             logger.debug(f"{field_name} length: {len(field_value)} chars")
