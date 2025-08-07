@@ -1,6 +1,7 @@
 """Command-line interface for piste-mind."""
 
 import asyncio
+from pathlib import Path
 
 import click
 from loguru import logger
@@ -10,6 +11,11 @@ from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
+
+RUN_DIR = Path(__file__).resolve().parent.parent / "run"
+RUN_DIR.mkdir(parents=True, exist_ok=True)
+logger.remove()
+logger.add(RUN_DIR / "cli.log", level="DEBUG")
 
 from piste_mind.agent import ModelType, get_model
 from piste_mind.choices import generate_options
